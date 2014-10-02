@@ -7,7 +7,7 @@ public class Matching {
 	public static int[] findMaximum(int[] X, int[] Y) {
 		maximum = new int[X.length + 1];
 		xMatched = new boolean[X.length + 1];
-		yMatched = new boolean[Y.length + 1]; /* accessed from y + 1 - xMatched.length */
+		yMatched = new boolean[Y.length + 1]; 
 
 		/*
 		 * All edges that have vertices with one edge only are automatically in
@@ -69,12 +69,13 @@ public class Matching {
 	 * that are also not in maximum
 	 */
 	private static void markProbable(int[] X, int[] Y) {
-		for (int y = Y[0]; y <= Y[Y.length - 1]; y++) {
-			if (!yMatched[y + 1 - xMatched.length]) {
+		for (int i = 0; i < Y.length; i++) {
+			int y = Y[i];
+			if (!yMatched[i+1]) {
 				int[] edgesFromY = EdgeList.edgesFromY(y);
 				int xToMatch = 0;
-				for (int i = 0; i < edgesFromY.length; i++) {
-					int x = edgesFromY[i];
+				for (int j = 0; j < edgesFromY.length; j++) {
+					int x = edgesFromY[j];
 					if (!xMatched[x]) {
 						/*
 						 * Here there may be problems with them being equal and
