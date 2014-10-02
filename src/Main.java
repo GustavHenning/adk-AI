@@ -38,6 +38,7 @@ public class Main {
 			EdgeList.add(x,y);
 			
 		}
+		Testing.printIntArray(EdgeList.numE);
 		writeFlow(X.length, Y.length, Matching.findMaximum(X, Y));
 	}
 

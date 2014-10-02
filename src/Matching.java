@@ -14,15 +14,15 @@ public class Matching {
 		 * the matching
 		 */
 		markLoners();
-		System.out.println("Loners marked");
-		Testing.printIntArray(maximum);
+//		System.out.println("Loners marked");
+//		Testing.printIntArray(maximum);
 		/*
 		 * For each vertice Y not in maximum choose it's X with least edges that
 		 * are also not in maximum
 		 */
 		markProbable(X, Y);
-		System.out.println("Probables marked");
-		Testing.printIntArray(maximum);
+//		System.out.println("Probables marked");
+//		Testing.printIntArray(maximum);
 
 		/* While not maximum, trace back and re match */
 
@@ -51,6 +51,7 @@ public class Matching {
 				/* These are X */
 				if (i < EdgeList.edges.length) {
 					int y = EdgeList.edgesFromX(i)[0];
+					System.out.println(y);
 					if (!yMatched[y + 1 - xMatched.length])
 						mark(i, y, true);
 				} else {/* Y values */
