@@ -5,7 +5,7 @@ public class Main {
 	public static void main(String[] args) {
 		io = new Kattio(System.in, System.out);
 		/* Read matching problem */
-		readBipartite();
+		maximumMatching();
 		/* Read flow problem */
 		readMaxFlow();
 		writeBipartiteSolution();
@@ -17,7 +17,8 @@ public class Main {
 	 * 
 	 * 
 	 */
-	private static void readBipartite() {
+	private static void maximumMatching() {
+		
 		int[] X = new int[io.getInt()];
 		int[] Y = new int[io.getInt()];
 		/* Fill X */
@@ -36,7 +37,6 @@ public class Main {
 			int x = io.getInt();
 			int y = io.getInt();
 			EdgeList.add(x,y);
-			
 		}
 		Testing.printIntArray(EdgeList.numE);
 		writeFlow(X.length, Y.length, Matching.findMaximum(X, Y));
