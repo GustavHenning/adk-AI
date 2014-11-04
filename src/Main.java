@@ -1,3 +1,5 @@
+
+
 public class Main {
 
 	static Kattio io;
@@ -7,8 +9,8 @@ public class Main {
 		/* Read matching problem */
 		maximumMatching();
 		/* Read flow problem */
-		readMaxFlow();
-		writeBipartiteSolution();
+//		readMaxFlow();
+//		writeBipartiteSolution();
 
 	}
 
@@ -18,7 +20,6 @@ public class Main {
 	 * 
 	 */
 	private static void maximumMatching() {
-		
 		int[] X = new int[io.getInt()];
 		int[] Y = new int[io.getInt()];
 		/* Fill X */
@@ -38,7 +39,8 @@ public class Main {
 			int y = io.getInt();
 			EdgeList.add(x,y);
 		}
-		Testing.printIntArray(EdgeList.numE);
+		EdgeList.precalc();
+//		Testing.printIntArray(EdgeList.numE);
 		writeFlow(X.length, Y.length, Matching.findMaximum(X, Y));
 	}
 

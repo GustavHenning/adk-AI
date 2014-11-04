@@ -1,6 +1,11 @@
+
+
+import java.util.ArrayList;
+
 public class EdgeList {
 	public static boolean[][] edges;
 	public static int[] numE;
+	public static ArrayList<int[]> edgesInts = new ArrayList<int[]>();
 
 	public EdgeList(int sizeX, int sizeY) {
 		edges = new boolean[sizeX + 1][sizeY + 1];
@@ -13,16 +18,32 @@ public class EdgeList {
 		numE[y]++;
 	}
 
+	public static void precalc(){
+		edgesInts.add(new int[0]);
+		
+		for(int v = 1; v < numE.length; v++){
+			int[] edgeList = v < edges.length ? edgesFromX(v) : edgesFromY(v);
+			edgesInts.add(edgeList);			
+		}
+	}
+	
+	public static int[] edges(int v){
+//		System.out.println(v);
+//		Testing.printIntArray(edgesInts.get(v));
+		return edgesInts.get(v);
+	}
+	
 	public static int[] edgesFromX(int x) {
 		int[] E = new int[numE[x]];
 		int eAdded = 0;
 		for (int j = 1; j < edges[x].length; j++) {
+//			System.out.println(j + " " + edges[x].length);
 			if (edges[x][j]) {
 				E[eAdded] = j + (edges.length-1);
 				eAdded++;
 			}
 		}
-		Testing.printIntArray(E);
+//		Testing.printIntArray(E);
 		return E;
 	}
 

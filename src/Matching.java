@@ -1,3 +1,5 @@
+
+
 import java.util.Stack;
 
 import sun.misc.Queue;
@@ -11,8 +13,52 @@ public class Matching {
 		maximum = new int[X.length + 1];
 		matched = new boolean[X.length + Y.length + 1];
 
-		calc(X,Y);
+		iterMatch(X);
 		return maximum;
+	}
+
+	public static void iterMatch(int[] X) {
+		for (int x : X) {
+			int[] edgesToX = EdgeList.edges(x);
+			boolean found = false;
+			for (int y : edgesToX) {
+//				System.out.println(x + " " + y);
+				if (!matched[y]) {
+					mark(x, y, true);
+					found = true;
+					break;
+				}
+				// Alla y upptagna
+			}
+			if (!found) {
+				for (int y : edgesToX) {
+					if (remap(y)) {
+						mark(x, y, true);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private static boolean remap(int y) {
+		int x = xFromY(y);
+		for (int yBis : EdgeList.edges(x)) {
+			if (!matched[yBis]) {
+				mark(x, y, false);
+				mark(x, yBis, true);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static int xFromY(int y) {
+		for (int i = 0; i < maximum.length; i++) {
+			if (maximum[i] == y)
+				return i;
+		}
+		return -1;
 	}
 
 	public static void calc(int[] X, int[] Y) {
@@ -29,13 +75,15 @@ public class Matching {
 				}
 			}
 		}
-		while(!queue.isEmpty()){
+		while (!queue.isEmpty()) {
 			try {
 				int next = (Integer) queue.dequeue();
-				} catch (InterruptedException e) {e.printStackTrace();}
-			
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
 		}
-		
+
 	}
 
 	private static void visit(int v, Queue queue) {
@@ -76,6 +124,6 @@ public class Matching {
 		maximum[x] = match ? y : 0;
 		matched[x] = match;
 		matched[y] = match;
-
+//		System.out.println(x + " " + y);
 	}
 }
