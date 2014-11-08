@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import sun.misc.Queue;
+
 public class Main {
 
 	/**
@@ -67,19 +69,12 @@ public class Main {
 			fE.add(fY[i], fY[fY.length - 1]);
 		}
 		/* create capacity */
-		HashMap<Integer, ArrayList<Edge>> cap = new HashMap<Integer, ArrayList<Edge>>();
+		int[][] cap = new int[bg.X.length][bg.Y.length];
 		for (Integer x : fE.edges.keySet()) {
 			ArrayList<Integer> ys = fE.edges.get(x);
 			for (Integer y : ys) {
-				ArrayList<Edge> e = cap.get(x);
-				if (e == null) {
-					e = new ArrayList<Edge>();
-					e.add(new Edge(y, 1));
-					cap.put(x, e);
-				} else {
-					e.add(new Edge(y, 1));
-					cap.put(x, e);
-				}
+				cap[x][y] = 1;
+				cap[y][x] = 1;
 			}
 		}
 
@@ -97,38 +92,111 @@ public class Main {
 		return new BipGraph(null, null, null);
 	}
 
+	public static EdKarpRes edKarp(FlowGraph fg) {
+		long f = 0;
+		int[][] F = new int[fg.V.length+1][fg.V.length+1];
+		
+		BFSResult bfsr = null;
+		while (true) {
+			try {
+				bfsr = BFS(fg, F);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (bfsr.m == 0) {
+				break;
+			}
+			f = f + bfsr.m;
+			/* (Backtrack search, and write flow) */
+			// backtrack(bfsr.parent, resCap, flow);
+//			System.out.println(bfsr.m);
+			int v = fg.t;
+			while (v != fg.s) {
+				int u = bfsr.p[v];
+				F[u][v] = F[u][v] + bfsr.m;
+//				F[v][u] = -F[u][v]; 
+//				System.out.println(u + " " + v + " " + (fg.c[u][v] - F[u][v]));
+				v = u;
+			}
+//			Testing.printIntArray(fg.c);
+//			Testing.printIntArray(F);
+		}
+		int[][] posFlow = new int[fg.V.length + 1][fg.V.length + 1];
+		int numE = 0;
+		for (int i = 0; i < F.length; i++) {
+			for (int j = 0; j < F[i].length; j++) {
+				if (F[j][i] > 0) {
+					if (posFlow[i][j] == 0 && posFlow[j][i] == 0) {
+						posFlow[i][j] = F[j][i];
+						numE++;
+					}
+				} 
+			}
+		}
+		// Testing.printIntArray(resCap);
+		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, posFlow);
+	}
+
+	public static BFSResult BFS(FlowGraph fg, int[][] F)
+			throws InterruptedException {
+		int[] P = new int[fg.V.length + 1];
+		for (int i = 1; i < P.length; i++) {
+			P[i] = -1;
+		}
+		P[fg.s] = -2; // Sätter källan till -2 för att vi ska veta vilket
+							// element som är s.
+		/* M[] init */
+		int[] M = new int[fg.V.length + 1];
+
+		/* M[s] = pos_inf */
+		M[fg.s] = 1;
+
+		Queue q = new Queue();
+		q.enqueue(fg.s);
+		while (!q.isEmpty()) {
+			int u = (Integer) q.dequeue();
+			if(fg.E.edges.get(u) != null){
+			for (int v : fg.E.edges.get(u)) {
+//				System.out.println(u + " " + v + " " + (fg.c[u][v] - F[u][v]) + " " + (fg.c[v][u] - F[v][u]) + " " + P[v]);
+				if ((fg.c[u][v] - F[u][v] > 0) && P[v] == -1) {
+					P[v] = u;
+					M[v] = Math.min(M[u], fg.c[u][v] - F[u][v]);
+					if (v != fg.t) {
+						q.enqueue(v);
+					} else {
+						return new BFSResult(M[fg.t], P);
+					}
+				}
+			}
+			}
+		}
+
+		return new BFSResult(0, P);
+	}
+
 	public static FlowGraph readFlowProblem(Kattio io) {
 		int v = io.getInt();
 		int s = io.getInt();
 		int t = io.getInt();
 		int numE = io.getInt();
-		
+
 		int[] V = new int[v];
-		for(int i = 0; i < v; i++){
-			V[i] = i+1;
+		for (int i = 0; i < v; i++) {
+			V[i] = i + 1;
 		}
-		
-		EdgeList E = new EdgeList();	
-		
-		HashMap<Integer, ArrayList<Edge>> cap = new HashMap<Integer, ArrayList<Edge>>();
+
+		EdgeList E = new EdgeList();
+
+		int[][] cap = new int[v+1][v+1];
+
 		for (int i = 0; i < numE; i++) {
 			int x = io.getInt();
 			int y = io.getInt();
 			E.add(x, y);
-			int c = io.getInt();
-			
-			ArrayList<Edge> e = cap.get(x);
-			if (e == null) {
-				e = new ArrayList<Edge>();
-				e.add(new Edge(y, c));
-				cap.put(x, e);
-			} else {
-				e.add(new Edge(y, c));
-				cap.put(x, e);
-			}
-			
+			cap[x][y] = io.getInt();
+
 		}
-		return new FlowGraph(V,E,cap,s,t);
+		return new FlowGraph(V, E, cap, s, t);
 	}
 
 	// public static FlowGraph readFlowSolution(Kattio io) {

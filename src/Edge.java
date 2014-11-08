@@ -11,4 +11,9 @@ public class Edge {
 	public String toString(){
 		return x + " " + y;
 	}
+	public boolean equals(Object o){
+		Edge e = (Edge) o;
+		return e.x == this.x && e.y == this.y;
+		
+	}
 }
