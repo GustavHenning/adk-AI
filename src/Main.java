@@ -1,6 +1,7 @@
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.ArrayList;
+import java.util.Arrays;
 ;
 
 public class Main {
@@ -29,7 +30,7 @@ public class Main {
 			/* */
 			int x = io.getInt();
 			int y = io.getInt();
-			E.add(x, y);
+			E.add(x, y, 1);
 		}
 		return new BipGraph(X, Y, E);
 	}
@@ -56,30 +57,21 @@ public class Main {
 		EdgeList fE = new EdgeList(fX.length + fY.length);
 		/* add e(x,s) to fE */
 		for (int i = 1; i < fX.length; i++) {
-			fE.add(fX[0], fX[i]);
+			fE.add(fX[0], fX[i], 1);
 		}
 		/* add E to fE */
-		for (Integer x : bg.E.edges.keySet()) {
-			ArrayList<Integer> ys = bg.E.edges.get(x);
-			for (Integer y : ys) {
-				fE.add(x + 1, y + 1);
+		for (int x = 0; x < bg.E.edges.length; x++) {
+			for (Edge y : bg.E.listByX(x)) {
+				fE.add(x + 1, y.a + 1, 1);
 			}
 		}
 		/* add e(y,t) to S */
 		for (int i = 0; i < fY.length - 1; i++) {
-			fE.add(fY[i], fY[fY.length - 1]);
+			fE.add(fY[i], fY[fY.length - 1], 1);
 		}
 		/* create capacity */
-		int[][] cap = new int[bg.X.length][bg.Y.length];
-		for (Integer x : fE.edges.keySet()) {
-			ArrayList<Integer> ys = fE.edges.get(x);
-			for (Integer y : ys) {
-				cap[x][y] = 1;
-				cap[y][x] = 1;
-			}
-		}
 
-		return new FlowGraph(fX, fY, fE, cap, 1, fY[fY.length - 1]);
+		return new FlowGraph(fX, fY, fE, 1, fY[fY.length - 1]);
 	}
 
 	/**
@@ -99,7 +91,7 @@ public class Main {
 		long f = 0;
 		int[][] F = new int[fg.V.length+1][fg.V.length+1];
 		int numE = 0;
-		
+
 		BFSResult bfsr = null;
 		while (true) {
 			try {
@@ -119,35 +111,34 @@ public class Main {
 					numE++;
 				}
 				F[u][v] = F[u][v] + bfsr.m;
+				F[v][u] = F[v][u] - bfsr.m;
 				v = u;
-				
 			}
+			
 		}
 		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, F);
 	}
 
 	public static BFSResult BFS(FlowGraph fg, int[][] F)
 			throws InterruptedException {
-		for (int i = 1; i < P.length; i++) {
-			P[i] = -1;
-		}
+		Arrays.fill(P, -1);
 		P[fg.s] = -2; // Sätter källan till -2 för att vi ska veta vilket
 							// element som är s.
 		/* M[] init */
 
 		/* M[s] = pos_inf */
-		M[fg.s] = 1;
+		M[fg.s] = Integer.MAX_VALUE;
 
 		ArrayDeque<Integer> q = new ArrayDeque<Integer>();
 		q.offer(fg.s);
 		while (!q.isEmpty()) {
 			int u = (Integer) q.poll();
-			for (int v : fg.E.edges.get(u)) {
-				if ((fg.c[u][v] - F[u][v] > 0) && P[v] == -1) {
-					P[v] = u;
-					M[v] = Math.min(M[u], fg.c[u][v] - F[u][v]);
-					if (v != fg.t) {
-						q.offer(v);
+			for (Edge v : fg.E.listByX(u)) {
+				if ((v.b - F[u][v.a] > 0) && P[v.a] == -1) {
+					P[v.a] = u;
+					M[v.a] = Math.min(M[u], v.b - F[u][v.a]);
+					if (v.a != fg.t) {
+						q.offer(v.a);
 					} else {
 						return new BFSResult(M[fg.t], P);
 					}
@@ -169,29 +160,23 @@ public class Main {
 		for (int i = 0; i < v; i++) {
 			V[i] = i + 1;
 		}
-
+		
 		EdgeList E = new EdgeList(v+1);
 
-		int[][] cap = new int[v+1][v+1];
 
 		for (int i = 0; i < numE; i++) {
-			int x = io.getInt();
-			int y = io.getInt();
-			E.add(x, y);
-			cap[x][y] = io.getInt();
-
+			E.add(io.getInt(), io.getInt(), io.getInt());
 		}
-		return new FlowGraph(V, E, cap, s, t);
+		return new FlowGraph(V, E, s, t);
 	}
 
 	public static void writeFlowProblem(Kattio io, FlowGraph fg) {
 		io.println(fg.X.length + fg.Y.length);
 		io.println(fg.s + " " + fg.t);
 		io.println(fg.E.numEdges);
-		for (Integer x : fg.E.edges.keySet()) {
-			ArrayList<Integer> ys = fg.E.edges.get(x);
-			for (Integer y : ys) {
-				io.println(x + " " + y + " " + 1);
+		for (int x = 0; x < fg.E.edges.length; x++) {
+			for (Edge y : fg.E.listByX(x)) {
+				io.println(x + " " + y.a + " " + 1);
 			}
 		}
 		io.flush();
@@ -211,7 +196,7 @@ public class Main {
 			if (x == 1 || y == t) {
 				continue;
 			}
-			bE.add(x - 1, y - 1);
+			bE.add(x - 1, y - 1, 1);
 		}
 		int[] bX = new int[fg.X.length - 1];
 		int[] bY = new int[fg.Y.length - 1];

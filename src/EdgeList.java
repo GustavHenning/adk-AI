@@ -1,30 +1,41 @@
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class EdgeList {
-	public HashMap<Integer, ArrayList<Integer>> edges;
+//	public HashMap<Integer, ArrayList<Integer>> edges;
+	public LinkedList<Edge>[] edges;
 	public int numEdges = 0;
 //	public boolean[][] e;
 
+	@SuppressWarnings("unchecked")
 	public EdgeList(int v) {
-		edges = new HashMap<Integer, ArrayList<Integer>>();
+		edges = new LinkedList[v];
 		for (int i = 0; i < v; i++) {
-			edges.put(i, new ArrayList<Integer>());
+			edges[i] = new LinkedList<Edge>();
 		}
 //		e = new boolean[v][v];
 	}
 
-	public void add(int x, int y) {
+	public void add(int x, int y, int c) {
 		numEdges++;
-		Integer X = new Integer(x);
-		ArrayList<Integer> ar;
-
-		ar = edges.get(X);
-		ar.add(new Integer(y));
-		edges.put(X, ar);
+		edges[x].add(new Edge(y,c));
+		
+//		Integer X = new Integer(x);
+//		ArrayList<Integer> ar;
+//
+//		ar = edges.get(X);
+//		ar.add(new Integer(y));
+//		edges.put(X, ar);
 //		e[x][y] = true;
 	}
+	
+	public List<Edge> listByX(int x){
+		return edges[x];
+	}
+
 	
 
 	// public void precalc(){

@@ -1,19 +1,19 @@
 
 public class Edge {
 
-	public int x, y;
+	public int a, b;
 	
-	public Edge(int x, int y){
-		this.x = x;
-		this.y = y;
+	public Edge(int a, int b){
+		this.a = a;
+		this.b = b;
 	}
 	
 	public String toString(){
-		return x + " " + y;
+		return a + " " + b;
 	}
 	public boolean equals(Object o){
 		Edge e = (Edge) o;
-		return e.x == this.x && e.y == this.y;
+		return e.a == this.a && e.b == this.b;
 		
 	}
 }

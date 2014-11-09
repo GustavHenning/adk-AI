@@ -25,7 +25,7 @@ public class EdKarpRes {
 		io.println(numE);
 		for (int i = 0; i < posFlow.length; i++) {
 			for (int j = 0; j < posFlow[i].length; j++) {
-				if (posFlow[i][j] != 0) {
+				if (posFlow[i][j] > 0) {
 					io.println(i + " " + j + " " + posFlow[i][j]);
 				}
 			}
