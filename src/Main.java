@@ -2,13 +2,12 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.LinkedList;
 ;
 
 public class Main {
 	static int[] P;
 	static int[] M;
-
 	/**
 	 * Example: 2 3 4 X = [1,2] Y = [3,4,5]
 	 * 
@@ -64,7 +63,7 @@ public class Main {
 		/* add E to fE */
 		for (int x = 0; x < bg.E.edges.length; x++) {
 			for (Edge y : bg.E.listByX(x)) {
-				fE.add(x + 1, y.a + 1, 1);
+				fE.add(x + 1, y.y + 1, 1);
 			}
 		}
 		/* add e(y,t) to S */
@@ -89,131 +88,76 @@ public class Main {
 
 	public static EdKarpRes edKarp(FlowGraph fg) {
 		P = new int[fg.V.length + 1];
-//		M = new int[fg.V.length + 1];
+		M = new int[fg.V.length + 1];
 		long f = 0;
-		int[][] F = new int[fg.V.length + 1][fg.V.length + 1];
+		int[][] F = new int[fg.V.length+1][fg.V.length+1];
+		int numE = 0;
 
 		BFSResult bfsr = null;
-//		while (true) {
+		while (true) {
 			try {
 				bfsr = BFS(fg, F);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-//			if (bfsr.m == 0) {
-//				break;
-//			}
-//			f = f + bfsr.m;
-//
-//			int v = fg.t;
-//			while (v != fg.s) {
-//				int u = bfsr.p[v];
-//				if (F[u][v] == 0) {
-//					numE++;
-//				}
-//				F[u][v] = F[u][v] + bfsr.m;
-//				F[v][u] = F[v][u] - bfsr.m;
-//				v = u;
-//			}
-			int numE = 0;
-			for(int i = 0; i < F.length; i++){
-				for(int j = 0; j < F[i].length; j++){
-					if(F[i][j] > 0){
-						numE++;
+			if (bfsr.m == 0) {
+				break;
+			}
+			f = f + bfsr.m;
+			
+			int v = fg.t;
+			while (v != fg.s) {
+				int u = bfsr.p[v];
+				F[u][v] += bfsr.m;
+				F[v][u] -= bfsr.m;
+				v = u;
+			}
+//			Testing.printIntArray(F);
+		}
+		LinkedList<Edge> res = new LinkedList<Edge>();
+		for(int i = 0; i < F.length; i++){
+			for(int j = 0; j < F[i].length; j++){
+				if(F[i][j] > 0){
+					for(Edge e : fg.E.listByX(i)){
+						if(e.y == j && !e.inverse){
+							e.setX(i);
+							res.add(e);
+							numE++;
+						}
 					}
 				}
 			}
-//		}
-//			Testing.printIntArray(bfsr.p);
-		return new EdKarpRes(fg.V.length, fg.s, fg.t, bfsr.m, numE, F);
+		}
+		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, F, res);
 	}
 
 	public static BFSResult BFS(FlowGraph fg, int[][] F)
 			throws InterruptedException {
-		// Arrays.fill(P, -1);
-		// P[fg.s] = -2;
-		// M[fg.s] = Integer.MAX_VALUE;
-		int flow = 0;
-		while (true) {
-			Arrays.fill(P, -1);
-			ArrayDeque<Integer> q = new ArrayDeque<Integer>();
-			P[fg.s] = -2;
-//			M[fg.s] = Integer.MAX_VALUE;
+		M = new int[fg.V.length + 1];
+		Arrays.fill(P, -1);
+		P[fg.s] = -2; 
+		M[fg.s] = Integer.MAX_VALUE;
 
-			q.push(fg.s);
-			while (!q.isEmpty() && P[fg.t] == -1) {
-				int u = q.pop();
-				// System.out.println(q.size() + " " + P[fg.t] + " " + fg.t);
-				for (Edge v : fg.E.listByX(u)) {
-					if (P[v.a] == -1) {
-						if (F[u][v.a] < v.b || F[v.a][u] > 0) {
-							// System.out.println(F[u][v.a] +" " + F[v.a][u] +
-							// " " + v.b );
-							P[v.a] = u;
-							q.push(v.a);
-						}
+		ArrayDeque<Integer> q = new ArrayDeque<Integer>();
+		q.offer(fg.s);
+		while (!q.isEmpty()) {
+			int u = (Integer) q.poll();
+			for (Edge v : fg.E.listByX(u)) {
+				if ((v.c - F[u][v.y] > 0) && P[v.y] == -1) {
+					P[v.y] = u;
+					M[v.y] = Math.min(M[u], v.c - F[u][v.y]);
+					if (v.y != fg.t) {
+						q.offer(v.y);
+					} else {
+						return new BFSResult(M[fg.t], P);
 					}
 				}
-				// Testing.printIntArray(P);
+			
 			}
-
-			if (P[fg.t] == -1) {
-				break;
-			}
-			int bot = Integer.MAX_VALUE;
-			int u = Integer.MAX_VALUE;
-//			System.out.println("bot " + bot);
-			for (int v = fg.t; u >= 0; v = u) {
-				u = P[v];
-				if (u == -2)
-					break;
-				if (F[v][u] > 0) {
-//					System.out.println(F[v][u]);
-					bot = Math.min(bot, F[v][u]);
-				} else {
-					for (Edge e : fg.E.listByX(u)) {
-						if (e.a == v) {
-							bot = Math.min(bot, e.b - F[u][v]);
-							break;
-						}
-					}
-				}
-				
-			}
-			u = 2;
-			for (int v = fg.t; u >= 0; v = u) {
-				u = P[v];
-				if (u == -2)
-					break;
-				if (F[v][u] > 0) {
-					F[v][u] -= bot;
-				} else {
-					F[u][v] += bot;
-				}
-			}
-			flow += bot;
 		}
-		return new BFSResult(flow, P);
 
+		return new BFSResult(0, P);
 	}
-
-	// ArrayDeque<Integer> q = new ArrayDeque<Integer>();
-	// q.offer(fg.s);
-	// while (!q.isEmpty()) {
-	// int u = (Integer) q.poll();
-	// for (Edge v : fg.E.listByX(u)) {
-	// if ((v.b - F[u][v.a] > 0) && P[v.a] == -1) {
-	// P[v.a] = u;
-	// M[v.a] = Math.min(M[u], v.b - F[u][v.a]);
-	// if (v.a != fg.t) {
-	// q.offer(v.a);
-	// } else {
-	// return new BFSResult(M[fg.t], P);
-	// }
-	// }
-	//
-	// }
-	// }
 
 	public static FlowGraph readFlowProblem(Kattio io) {
 		int v = io.getInt();
@@ -225,8 +169,9 @@ public class Main {
 		for (int i = 0; i < v; i++) {
 			V[i] = i + 1;
 		}
+		
+		EdgeList E = new EdgeList(v+1);
 
-		EdgeList E = new EdgeList(v + 1);
 
 		for (int i = 0; i < numE; i++) {
 			E.add(io.getInt(), io.getInt(), io.getInt());
@@ -240,7 +185,7 @@ public class Main {
 		io.println(fg.E.numEdges);
 		for (int x = 0; x < fg.E.edges.length; x++) {
 			for (Edge y : fg.E.listByX(x)) {
-				io.println(x + " " + y.a + " " + 1);
+				io.println(x + " " + y.y + " " + 1);
 			}
 		}
 		io.flush();

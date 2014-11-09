@@ -18,7 +18,7 @@ public class BipGraph {
 		io.println(E.numEdges);
 		for (int x = 0; x < E.edges.length; x++) {
 			for (Edge y : E.listByX(x)) {
-				io.println(x + " " + y.a);
+				io.println(x + " " + y.y);
 			}
 		}
 		io.flush();

@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.LinkedList;
 
 public class EdKarpRes {
 
@@ -8,11 +9,13 @@ public class EdKarpRes {
 	private int s;
 	private int t;
 	private int numE;
+	private LinkedList<Edge> res;
 
 	public EdKarpRes(int numV, int s, int t, long flow, int numE,
-			int[][] posFlow) {
+			int[][] posFlow, LinkedList<Edge> res) {
 		this.flow = flow;
 		this.posFlow = posFlow;
+		this.res = res;
 		this.numV = numV;
 		this.s = s;
 		this.t = t;
@@ -23,12 +26,8 @@ public class EdKarpRes {
 		io.println(numV);
 		io.println(s + " " + t + " " + flow);
 		io.println(numE);
-		for (int i = 0; i < posFlow.length; i++) {
-			for (int j = 0; j < posFlow[i].length; j++) {
-				if (posFlow[i][j] > 0) {
-					io.println(i + " " + j + " " + posFlow[i][j]);
-				}
-			}
+		for(Edge e : res){
+			io.println(e.x + " " + e.y + " " + posFlow[e.x][e.y]);
 		}
 		io.flush();
 	}
