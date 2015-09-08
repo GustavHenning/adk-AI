@@ -29,7 +29,8 @@ public class Action {
     }
 
     // /prints the content of this action object
-    public String toString() {
+    @Override
+	public String toString() {
         if (isDontShoot())
             return "DONT SHOOT";
         else {

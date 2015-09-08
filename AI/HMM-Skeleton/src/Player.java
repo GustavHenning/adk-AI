@@ -27,6 +27,7 @@ class Player {
 	 *         pass
 	 */
 	public Action shoot(GameState pState, Deadline pDue) {
+		System.err.println("Shoot code reached ");
 		if (moves == null)
 			moves = new HMM(Constants.COUNT_MOVE,
 					pState.getNumBirds()); /* one for moves or for each bird? */
