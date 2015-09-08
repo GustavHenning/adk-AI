@@ -40,7 +40,7 @@ class Player {
 		moves.train(birdStates, 1 /* should this increase? */);
 		if (pState.getNumNewTurns() < 10) {
 			// This line chooses not to shoot
-			return cDontShoot;
+			return new Action(0, Constants.MOVE_UP);
 		} else {
 			/*
 			 * Here, out of all alive birds, calculate the most predictable
