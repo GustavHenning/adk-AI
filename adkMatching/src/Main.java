@@ -109,8 +109,8 @@ public class Main {
 			int v = fg.t;
 			while (v != fg.s) {
 				int u = bfsr.p[v];
-//				 System.err.println("Path " + u + " -> " + v + " : " +
-//				 bfsr.m);
+				// System.err.println("Path " + u + " -> " + v + " : " +
+				// bfsr.m);
 				F[u][v] = F[u][v] + bfsr.m;
 				F[v][u] = F[v][u] - bfsr.m;
 				v = u;
@@ -118,7 +118,7 @@ public class Main {
 		}
 		for (int i = 0; i < F.length; i++) {
 			for (int j = 0; j < F[i].length; j++) {
-//				 System.err.print(" " + F[i][j]);
+				// System.err.print(" " + F[i][j]);
 				if (F[i][j] > 0) {
 					for (Edge e : fg.E.listByX(i)) {
 						if (e.y == j && !e.counted && !e.inverse) {
@@ -128,7 +128,7 @@ public class Main {
 					}
 				}
 			}
-//			 System.err.println();
+			// System.err.println();
 		}
 		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, F);
 	}
@@ -144,21 +144,23 @@ public class Main {
 		while (!q.isEmpty()) {
 			int x = q.poll();
 			for (Edge e : fg.E.listByX(x)) {
-				int c = e.inverse ? (F[x][e.y] - e.capacity) : (e.capacity
-						- F[x][e.y]);
-//				int c = e.capacity - F[x][e.y];
-				 System.err.println("Edge from " + x + " to " + e.y + " : "
-				 + c);
+				int c = e.inverse ? (F[x][e.y] - e.capacity)
+						: (e.capacity - F[x][e.y]);
+				// int c = e.capacity - F[x][e.y];
+				System.err.println("Edge from " + x + " to " + e.y + " : " + c);
 				if ((c > 0) && P[e.y] == -1) {
 					P[e.y] = x;
 					M[e.y] = Math.min(M[x], c);
 					if (e.y != fg.t) {
-						q.offer(e.y);
+						if (e.inverse) {
+							q.offerLast(e.y);
+						} else {
+							q.offerFirst(e.y);
+						}
 					} else {
 						return new BFSResult(M[fg.t], P);
 					}
 				}
-
 			}
 		}
 		return new BFSResult(0, P);
