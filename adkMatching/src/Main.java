@@ -64,7 +64,7 @@ public class Main {
 		/* add E to fE */
 		for (int x = 0; x < bg.E.edges.length; x++) {
 			for (Edge y : bg.E.listByX(x)) {
-				fE.add(x + 1, y.a + 1, 1);
+				fE.add(x + 1, y.y + 1, 1);
 			}
 		}
 		/* add e(y,t) to S */
@@ -109,23 +109,26 @@ public class Main {
 			int v = fg.t;
 			while (v != fg.s) {
 				int u = bfsr.p[v];
-				
+				 System.err.println("Path " + u + " -> " + v + " : " +
+				 bfsr.m);
 				F[u][v] = F[u][v] + bfsr.m;
 				F[v][u] = F[v][u] - bfsr.m;
 				v = u;
-			}		
+			}
 		}
-		for(int i = 0; i < F.length; i++){
-			for(int j = 0; j < F[i].length; j++){
-				if(F[i][j] > 0){
-					for(Edge e : fg.E.listByX(i)){
-						if(e.a == j && !e.counted && !e.inverse){
+		for (int i = 0; i < F.length; i++) {
+			for (int j = 0; j < F[i].length; j++) {
+//				 System.err.print(" " + F[i][j]);
+				if (F[i][j] > 0) {
+					for (Edge e : fg.E.listByX(i)) {
+						if (e.y == j && !e.counted && !e.inverse) {
 							numE++;
 							e.counted = true;
 						}
 					}
 				}
 			}
+//			 System.err.println();
 		}
 		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, F);
 	}
@@ -139,17 +142,22 @@ public class Main {
 		ArrayDeque<Integer> q = new ArrayDeque<Integer>();
 		q.offer(fg.s);
 		while (!q.isEmpty()) {
-			int u = (Integer) q.poll();
-			for (Edge v : fg.E.listByX(u)) {
-				if ((v.b - F[u][v.a] > 0) && P[v.a] == -1) {
-					P[v.a] = u;
-					M[v.a] = Math.min(M[u], v.b - F[u][v.a]);
-					if (v.a != fg.t) {
-						q.offer(v.a);
+			int x = q.poll();
+			for (Edge e : fg.E.listByX(x)) {
+				int c = e.inverse ? (F[x][e.y] - e.capacity) : (e.capacity
+						- F[x][e.y]);
+				 System.err.println("Edge from " + x + " to " + e.y + " : "
+				 + c);
+				if ((c > 0) && P[e.y] == -1) {
+					P[e.y] = x;
+					M[e.y] = Math.min(M[x], c);
+					if (e.y != fg.t) {
+						q.offer(e.y);
 					} else {
 						return new BFSResult(M[fg.t], P);
 					}
 				}
+
 			}
 		}
 		return new BFSResult(0, P);
@@ -180,7 +188,7 @@ public class Main {
 		io.println(fg.E.numEdges);
 		for (int x = 0; x < fg.E.edges.length; x++) {
 			for (Edge y : fg.E.listByX(x)) {
-				io.println(x + " " + y.a + " " + 1);
+				io.println(x + " " + y.y + " " + 1);
 			}
 		}
 		io.flush();

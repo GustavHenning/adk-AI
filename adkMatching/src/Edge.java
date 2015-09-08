@@ -1,21 +1,21 @@
 
 public class Edge {
 
-	public int a, b;
+	public int y, capacity;
 	public boolean counted = false;
 	public boolean inverse = false;
 	
-	public Edge(int a, int b){
-		this.a = a;
-		this.b = b;
+	public Edge(int y, int capacity){
+		this.y = y;
+		this.capacity = capacity;
 	}
 	
 	public String toString(){
-		return a + " " + b;
+		return y + " " + capacity;
 	}
 	public boolean equals(Object o){
 		Edge e = (Edge) o;
-		return e.a == this.a && e.b == this.b;
+		return e.y == this.y && e.capacity == this.capacity;
 		
 	}
 
