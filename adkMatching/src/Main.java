@@ -2,12 +2,13 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+
 ;
 
 public class Main {
 	static int[] P;
 	static int[] M;
+
 	/**
 	 * Example: 2 3 4 X = [1,2] Y = [3,4,5]
 	 * 
@@ -63,7 +64,7 @@ public class Main {
 		/* add E to fE */
 		for (int x = 0; x < bg.E.edges.length; x++) {
 			for (Edge y : bg.E.listByX(x)) {
-				fE.add(x + 1, y.y + 1, 1);
+				fE.add(x + 1, y.a + 1, 1);
 			}
 		}
 		/* add e(y,t) to S */
@@ -90,8 +91,8 @@ public class Main {
 		P = new int[fg.V.length + 1];
 		M = new int[fg.V.length + 1];
 		long f = 0;
-		int[][] F = new int[fg.V.length+1][fg.V.length+1];
 		int numE = 0;
+		int[][] F = new int[fg.V.length + 1][fg.V.length + 1];
 
 		BFSResult bfsr = null;
 		while (true) {
@@ -104,38 +105,35 @@ public class Main {
 				break;
 			}
 			f = f + bfsr.m;
-			
+
 			int v = fg.t;
 			while (v != fg.s) {
 				int u = bfsr.p[v];
-				F[u][v] += bfsr.m;
-				F[v][u] -= bfsr.m;
+				
+				F[u][v] = F[u][v] + bfsr.m;
+				F[v][u] = F[v][u] - bfsr.m;
 				v = u;
-			}
-//			Testing.printIntArray(F);
+			}		
 		}
-		LinkedList<Edge> res = new LinkedList<Edge>();
 		for(int i = 0; i < F.length; i++){
 			for(int j = 0; j < F[i].length; j++){
 				if(F[i][j] > 0){
 					for(Edge e : fg.E.listByX(i)){
-						if(e.y == j && !e.inverse){
-							e.setX(i);
-							res.add(e);
+						if(e.a == j && !e.counted && !e.inverse){
 							numE++;
+							e.counted = true;
 						}
 					}
 				}
 			}
 		}
-		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, F, res);
+		return new EdKarpRes(fg.V.length, fg.s, fg.t, f, numE, F);
 	}
 
 	public static BFSResult BFS(FlowGraph fg, int[][] F)
 			throws InterruptedException {
-		M = new int[fg.V.length + 1];
 		Arrays.fill(P, -1);
-		P[fg.s] = -2; 
+		P[fg.s] = -2;
 		M[fg.s] = Integer.MAX_VALUE;
 
 		ArrayDeque<Integer> q = new ArrayDeque<Integer>();
@@ -143,19 +141,17 @@ public class Main {
 		while (!q.isEmpty()) {
 			int u = (Integer) q.poll();
 			for (Edge v : fg.E.listByX(u)) {
-				if ((v.c - F[u][v.y] > 0) && P[v.y] == -1) {
-					P[v.y] = u;
-					M[v.y] = Math.min(M[u], v.c - F[u][v.y]);
-					if (v.y != fg.t) {
-						q.offer(v.y);
+				if ((v.b - F[u][v.a] > 0) && P[v.a] == -1) {
+					P[v.a] = u;
+					M[v.a] = Math.min(M[u], v.b - F[u][v.a]);
+					if (v.a != fg.t) {
+						q.offer(v.a);
 					} else {
 						return new BFSResult(M[fg.t], P);
 					}
 				}
-			
 			}
 		}
-
 		return new BFSResult(0, P);
 	}
 
@@ -169,9 +165,8 @@ public class Main {
 		for (int i = 0; i < v; i++) {
 			V[i] = i + 1;
 		}
-		
-		EdgeList E = new EdgeList(v+1);
 
+		EdgeList E = new EdgeList(v + 1);
 
 		for (int i = 0; i < numE; i++) {
 			E.add(io.getInt(), io.getInt(), io.getInt());
@@ -185,7 +180,7 @@ public class Main {
 		io.println(fg.E.numEdges);
 		for (int x = 0; x < fg.E.edges.length; x++) {
 			for (Edge y : fg.E.listByX(x)) {
-				io.println(x + " " + y.y + " " + 1);
+				io.println(x + " " + y.a + " " + 1);
 			}
 		}
 		io.flush();

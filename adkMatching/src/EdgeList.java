@@ -22,7 +22,7 @@ public class EdgeList {
 	public void add(int x, int y, int c) {
 		numEdges++;
 		edges[x].add(new Edge(y,c));
-		edges[y].add(new Edge(x,c).setInverse(true));
+		edges[y].add(new Edge(x,-c).setInverse(true));
 		
 //		Integer X = new Integer(x);
 //		ArrayList<Integer> ar;

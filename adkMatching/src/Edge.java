@@ -1,25 +1,26 @@
 
 public class Edge {
 
-	public int y, c, x;
-	public boolean inverse;
+	public int a, b;
+	public boolean counted = false;
+	public boolean inverse = false;
 	
 	public Edge(int a, int b){
-		this.y = a;
-		this.c = b;
+		this.a = a;
+		this.b = b;
 	}
 	
 	public String toString(){
-		return y + " " + c;
+		return a + " " + b;
 	}
-
+	public boolean equals(Object o){
+		Edge e = (Edge) o;
+		return e.a == this.a && e.b == this.b;
+		
+	}
 
 	public Edge setInverse(boolean inverse) {
 		this.inverse = inverse;
 		return this;
 	}
-	public void setX(int x){
-		this.x = x;
-	}
-	
 }
