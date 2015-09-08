@@ -6,7 +6,7 @@ public class MaxFlow {
 	public Kattio io;
 
 	public int V, source, sink, E, flowC, from, to, cap, minFlowFound, totFlow, currentCap;
-	public Edge currentEdge, inverseEdge;
+	public Edge currEdge, inverseEdge;
 	public Edge[] edgeList, inverseEdgeList;
 
 	public ArrayList<Edge>[] edges;
@@ -25,7 +25,9 @@ public class MaxFlow {
 		path = new Edge[V + 1];
 
 		readGraph();
+
 		findFlow();
+
 		writeFlow();
 
 		io.close();
@@ -47,13 +49,13 @@ public class MaxFlow {
 			if (edges[to] == null)
 				edges[to] = new ArrayList<Edge>();
 			/* Create edges */
-			currentEdge = new Edge(from, to, cap);
+			currEdge = new Edge(from, to, cap);
 			inverseEdge = new Edge(to, from, 0);
 			/* Refer them */
-			currentEdge.inverse = inverseEdge;
-			inverseEdge.inverse = currentEdge;
+			currEdge.inverse = inverseEdge;
+			inverseEdge.inverse = currEdge;
 			/* Add the new edges */
-			edges[from].add(currentEdge);
+			edges[from].add(currEdge);
 			edges[to].add(inverseEdge);
 
 		}
