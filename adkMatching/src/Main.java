@@ -109,8 +109,8 @@ public class Main {
 			int v = fg.t;
 			while (v != fg.s) {
 				int u = bfsr.p[v];
-				 System.err.println("Path " + u + " -> " + v + " : " +
-				 bfsr.m);
+//				 System.err.println("Path " + u + " -> " + v + " : " +
+//				 bfsr.m);
 				F[u][v] = F[u][v] + bfsr.m;
 				F[v][u] = F[v][u] - bfsr.m;
 				v = u;
@@ -146,6 +146,7 @@ public class Main {
 			for (Edge e : fg.E.listByX(x)) {
 				int c = e.inverse ? (F[x][e.y] - e.capacity) : (e.capacity
 						- F[x][e.y]);
+//				int c = e.capacity - F[x][e.y];
 				 System.err.println("Edge from " + x + " to " + e.y + " : "
 				 + c);
 				if ((c > 0) && P[e.y] == -1) {
