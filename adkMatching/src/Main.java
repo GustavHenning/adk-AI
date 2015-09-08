@@ -147,8 +147,8 @@ public class Main {
 				int c = e.inverse ? (F[x][e.y] - e.capacity)
 						: (e.capacity - F[x][e.y]);
 				// int c = e.capacity - F[x][e.y];
-				System.err.println("Edge from " + x + " to " + e.y + " : " + c);
-				if ((c > 0) && P[e.y] == -1) {
+//				System.err.println("Edge from " + x + " to " + e.y + " : " + c);
+				if ((e.capacity - F[x][e.y] > 0) && P[e.y] == -1) {
 					P[e.y] = x;
 					M[e.y] = Math.min(M[x], c);
 					if (e.y != fg.t) {

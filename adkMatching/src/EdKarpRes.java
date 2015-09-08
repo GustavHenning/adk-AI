@@ -1,5 +1,3 @@
-import java.util.HashMap;
-
 public class EdKarpRes {
 
 	private long flow;
@@ -8,6 +6,7 @@ public class EdKarpRes {
 	private int s;
 	private int t;
 	private int numE;
+	private EdgeList eList;
 
 	public EdKarpRes(int numV, int s, int t, long flow, int numE,
 			int[][] posFlow) {
