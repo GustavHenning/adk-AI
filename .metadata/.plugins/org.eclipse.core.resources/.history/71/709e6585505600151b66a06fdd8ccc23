@@ -1,0 +1,16 @@
+
+public class Edge {
+	public int id, inverseId;
+	public int A, B;
+	public int C, CF, flow;
+	public Edge inverse;
+	
+	Edge(int A, int B, int C){
+		this.A = A;
+		this.B = B;
+		this.C = C;
+		CF = this.C;
+		flow = 0;
+	}
+	
+}

@@ -1,0 +1,217 @@
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+
+public class MaxFlow {
+
+	public Kattio io;
+
+	public int V, source, sink, E, flowC, from, to, cap;
+	public int r;
+
+	public int totFlow;
+
+	public int currentCapacity;
+	public Edge currEdge, inverseEdge;
+	public Edge[] edgeList, inverseEdgeList;
+
+	public ArrayList<Edge>[] edges;
+	public Edge[] path; 
+
+	public MaxFlow(){
+		io = new Kattio(System.in, System.out);
+
+		V = io.getInt();
+		source = io.getInt();
+		sink = io.getInt();
+		E = io.getInt();
+		io.flush();
+
+		edges = new ArrayList[V+1];
+		path = new Edge[V+1];
+		
+		readInputGraph();
+
+		KARP();
+
+		writeFlowGraph();
+		
+		io.close();
+
+	}
+
+	void readInputGraph(){
+		for (int i = 0; i < E; i++) {
+			/* Read edge */
+			from = io.getInt();
+			to = io.getInt();
+			cap = io.getInt();
+			
+			io.flush();
+
+			/* Init neighbor list*/
+			if(edges[from] == null)
+				edges[from] = new ArrayList<Edge>();
+
+			/* Backwards too */
+			if(edges[to] == null)
+				edges[to] = new ArrayList<Edge>();
+
+			
+			/* Create edges */
+			currEdge = new Edge(from, to, cap);
+			inverseEdge = new Edge(to, from, 0);
+
+			//Koppla dem till varandra
+			currEdge.inverse = inverseEdge;
+			inverseEdge.inverse = currEdge;
+
+			
+			//Lägg in dem i grannlistorna
+			edges[from].add(currEdge);
+			edges[to].add(inverseEdge);
+
+		}
+	}
+
+	public void KARP(){
+
+
+		Edge e;
+
+		while(BFS(source,sink)){
+			
+			//Spara vägen BFSen i en lista
+			ArrayList<Edge> localPath = new ArrayList<Edge>();
+		
+			//Hämta ut den kant som man kommit till sänkan med
+			Edge localEdge = path[sink];
+			
+			//Sätt första r till CF hos kanten till källan
+			r = localEdge.CF;
+			
+			while(localEdge.A != source){
+				//Hitta minsta r
+				r = Math.min(r, localEdge.CF);
+				
+				
+				/*
+				 * För att hitta alternerande stigar ( bakåtstigar, eller vad det nu heter så lägger vi till noden till pathen )
+				 */
+				localPath.add(localEdge);
+				
+				//Plocka ut nästa väg
+				localEdge = path[localEdge.A];
+			}
+			
+			//Inte missa första kanten
+			r = Math.min(r, localEdge.CF);
+			
+			//och lägg till den
+			localPath.add(localEdge);
+			
+			// totala flödet ska uppdateras eftersom vi hittat slutet
+			totFlow += r;
+			
+			//uppdatera alla kanters värden
+			for (int i = 0; i < localPath.size(); i++) {
+				e = localPath.get(i);
+				
+				e.flow += r;
+				e.inverse.flow= -1*e.flow;
+				e.CF = e.C - e.flow;
+				e.inverse.CF = e.inverse.C - e.inverse.flow;
+				
+			}
+		}
+	}
+
+	boolean BFS(int source,int sink){
+
+		//Finns det inget slut, sänkan saknar grannar eller ifall källan är samma som sänkan så avbryt
+		if(edges[sink] == null || edges[sink].size() == 0 || source == sink)
+			return false;
+
+		
+		ArrayDeque<Edge> queue = new ArrayDeque<Edge>();
+		
+		boolean[] visited = new boolean[V+1];
+		
+		//Skapa en fake kant som går från 0 till källan
+		Edge sourceEdge = new Edge(0,source,0);
+		
+		//Köa skiten ur den
+		queue.add(sourceEdge);
+		
+		
+		Edge currentEdge;
+		Edge nextEdge;
+
+		//BFS...
+		while(!queue.isEmpty()){
+
+			currentEdge = queue.poll();
+
+			ArrayList<Edge> neighbors = edges[currentEdge.B];
+
+			if (neighbors == null)
+				return false;
+			
+			for (int i = 0; i < neighbors.size(); i++) {
+				nextEdge = neighbors.get(i);
+				if(nextEdge.CF > 0 && visited[nextEdge.B] != true){
+					
+					//Har vi hittat sänkan så ska vi sluta
+					if(nextEdge.B == sink){
+						visited[nextEdge.B] = true;
+						path[sink] = nextEdge;
+						return true;
+					}
+
+					visited[nextEdge.B] = true;
+					path[nextEdge.B] = nextEdge;
+					queue.add(nextEdge);
+
+				}
+
+			}
+		}
+		
+		//Tar kön slut så avbryt
+		return false;
+
+	}
+
+	void writeFlowGraph() {
+		
+		
+		io.println(V);
+		io.println(source + " " + sink + " " +totFlow);
+
+		ArrayList<Edge> numberOfEdgesToPrint = new ArrayList<Edge>();
+		
+		//Plocka ut alla kanter som har positivt flöde
+		for (int i = 0; i < edges.length; i++) {
+			if(edges[i] != null){
+				for (int j = 0; j < edges[i].size(); j++) {
+					if(edges[i].get(j).flow > 0)
+						numberOfEdgesToPrint.add(edges[i].get(j));
+				}
+			}
+		}
+		
+		
+		io.println(numberOfEdgesToPrint.size());
+		io.flush();
+		
+		//SKRIV UT DEM!!
+		for (int i = 0; i < numberOfEdgesToPrint.size(); i++) {
+				io.println(numberOfEdgesToPrint.get(i).A + " " + numberOfEdgesToPrint.get(i).B + " " + numberOfEdgesToPrint.get(i).flow);
+				io.flush();
+		}
+	}
+
+
+	public static void main(String args[]){
+		MaxFlow mf = new MaxFlow();
+	}
+}
