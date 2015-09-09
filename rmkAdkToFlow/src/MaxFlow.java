@@ -164,7 +164,7 @@ public class MaxFlow {
 	void writeFlow() {
 
 		io.println(V);
-		io.println(source + " " + sink + " " + totFlow);
+//		io.println(source + " " + sink + " " + totFlow);
 
 		ArrayList<Edge> numEdgesToPrint = new ArrayList<Edge>();
 		
@@ -172,6 +172,8 @@ public class MaxFlow {
 		for (int i = 0; i < edges.length; i++) {
 			if (edges[i] != null) {
 				for (int j = 0; j < edges[i].size(); j++) {
+					if(i == source || j == source || i == sink || j == sink)
+						continue;
 					if (edges[i].get(j).flow > 0)
 						numEdgesToPrint.add(edges[i].get(j));
 				}
@@ -183,8 +185,7 @@ public class MaxFlow {
 
 		/* Print em */
 		for (int i = 0; i < numEdgesToPrint.size(); i++) {
-			io.println(numEdgesToPrint.get(i).x + " " + numEdgesToPrint.get(i).y + " "
-					+ numEdgesToPrint.get(i).flow);
+			io.println(numEdgesToPrint.get(i).x + " " + numEdgesToPrint.get(i).y);
 			io.flush();
 		}
 	}
