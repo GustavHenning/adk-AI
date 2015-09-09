@@ -1,4 +1,3 @@
-package rmkAdkToFlow;
 
 public class Edge {
 	public int id, inverseId;

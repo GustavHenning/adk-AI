@@ -1,4 +1,3 @@
-package rmkAdkToFlow;
 
 public class MaxBip {
 
