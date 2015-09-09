@@ -16,12 +16,12 @@ public class ToFlow {
 		io.flush();
 		C = 1;
 		source = 0;
-		sink = V;
+		sink = V + 1;
 		
-		edges = new ArrayList[V + 1];
+		edges = new ArrayList[V + 2]; /* + 2 because source | X, Y | sink */
 		
 		/* Create sink, source */
-		for(int i = 0; i < V; i++){
+		for(int i = 0; i < sink; i++){
 			if(i <= X){
 				createEdge(source, i);
 			} else {

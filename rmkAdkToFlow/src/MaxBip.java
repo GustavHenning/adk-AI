@@ -3,7 +3,7 @@ public class MaxBip {
 
 	public MaxBip(){
 		ToFlow f = new ToFlow();
-		MaxFlow max = new MaxFlow(f.io, f.V, f.source, f.sink, f.E, f.edges);
+		MaxFlow max = new MaxFlow(f.io, f.V,f.X, f.Y, f.source, f.sink, f.E, f.edges);
 	}
 	
 	public static void main(String[] args){

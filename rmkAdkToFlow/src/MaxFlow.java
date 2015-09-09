@@ -5,7 +5,7 @@ public class MaxFlow {
 
 	public Kattio io;
 
-	public int V, source, sink, E, flowC, from, to, cap, minFlowFound, totFlow, currentCap;
+	public int V,X,Y, source, sink, E, flowC, from, to, cap, minFlowFound, totFlow, currentCap;
 	public Edge currentEdge, inverseEdge;
 	public Edge[] edgeList, inverseEdgeList;
 
@@ -32,15 +32,17 @@ public class MaxFlow {
 
 	}
 
-	public MaxFlow(Kattio io, int V, int source, int sink, int E, ArrayList<Edge>[] edges){
+	public MaxFlow(Kattio io, int V,int X, int Y, int source, int sink, int E, ArrayList<Edge>[] edges){
 		this.io = io;
 		this.V = V;
+		this.X = X;
+		this.Y = Y;
 		this.source = source;
 		this.sink = sink;
 		this.E = E;
 		this.edges = edges;
 		
-		path = new Edge[V + 1];
+		path = new Edge[V + 2]; /* + 2 because source | X, Y | sink */
 		
 		findFlow();
 		writeFlow();
@@ -121,7 +123,7 @@ public class MaxFlow {
 
 		ArrayDeque<Edge> queue = new ArrayDeque<Edge>();
 
-		boolean[] visited = new boolean[V + 1];
+		boolean[] visited = new boolean[V + 2]; /* + 2 because source | X, Y | sink */
 
 		/* Create a fictional source node */
 		Edge sourceEdge = new Edge(0, source, 0);
@@ -163,7 +165,7 @@ public class MaxFlow {
 
 	void writeFlow() {
 
-		io.println(V);
+		io.println(X + " " + Y);
 //		io.println(source + " " + sink + " " + totFlow);
 
 		ArrayList<Edge> numEdgesToPrint = new ArrayList<Edge>();
