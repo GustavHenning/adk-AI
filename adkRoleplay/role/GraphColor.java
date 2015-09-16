@@ -1,4 +1,4 @@
-package roles;
+package role;
 
 import java.util.ArrayList;
 
@@ -20,21 +20,26 @@ public class GraphColor {
 
 			while (!colorUnique) {
 				if (next < edges.length && edges[next] != null) {
+					boolean same = false;
 					for (Edge e : edges[next]) {
 						if (C[e.y] == nextColor) {
 							nextColor++;
 							if (nextColor > m) {
 								return false;
 							}
-							break;
+							same = true;
 						}
 					}
-					colorUnique = true;
+					colorUnique = !same;
 				} else {
 					break; /* No edges: just assign a color */
 				}
 			}
 			C[next] = nextColor;
+		}
+		System.err.println("terminated");
+		for(int i = 0; i < C.length; i++){
+			System.err.println("c " + C[i]);
 		}
 		return true;
 	}

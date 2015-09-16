@@ -1,4 +1,4 @@
-package roles;
+package role;
 
 import java.util.StringTokenizer;
 import java.io.BufferedReader;
