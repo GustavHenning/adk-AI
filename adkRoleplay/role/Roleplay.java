@@ -1,119 +1,60 @@
 package role;
-
-import java.util.ArrayList;
-
 public class Roleplay {
-	int roles, stages, actors, numE;
-	ArrayList<Edge>[] edges;
 
+		/* 
+		* In: 
+		*	vertices: (v>=1)
+		*	edges: (e>=0)
+		*	goal: (m=>1)
+		*
+		*	for(e)
+		*		e.x e.y
+		* Out:
+		*	roles (n=>1)
+		*	scenes: (s=>1)
+		*	actors: (k=>2)
+		*	for(roles)
+		*		k1, k2 ... etc
+		*	for(scenes)
+		*		n1, n2 ... etc
+		*/
 
-	/*
-	 * 1. Takes input 2. Reduces input to GraphColor input 3. Returns solution
-	 */
-	@SuppressWarnings("unchecked")
-	public Roleplay() {
-		Kattio io = new Kattio(System.in, System.out);
-		roles = io.getInt();
-		stages = io.getInt();
-		actors = io.getInt(); // playas
-		edges = new ArrayList[roles + 2];
+		public Roleplay() {
+			Kattio io = new Kattio(System.in, System.out);
+			int v = io.getInt();
+			int e = io.getInt();
+			int m = io.getInt();
 
-		for (int i = 0; i < roles; i++) {
-			/* ??? */
-			int rMax = io.getInt();
-			for (int j = 0; j < rMax; j++) {
-				io.getInt();
-			}
-			io.flush();
-		}
-		for (int i = 0; i < stages; i++) {
-			int[] n = new int[io.getInt()];
-			for (int j = 0; j < n.length; j++) {
-				n[j] = io.getInt();
-			}
-			io.flush();
-			for (int j = 0; j < n.length; j++) {
-				int x = n[j];
-				for (int k = 0; k < n.length; k++) {
-					if (j != k) {
-						int y = n[k];
-						addEdge(x, y);
-					}
-				}
-			}
-		}
-		for (int i = 1; i < edges.length - 1; i++) {
-			addEdge(i, edges.length - 1);
-		}
-		/* Graffärgning? */
-		// System.err.println("n " + roles + " s " + stages + " k " + actors);
-		// System.err.println(solvable());
-		printKattis();
-		io.close();
-	}
+			int n = v+1;
+			int s = e;
+			int k = m+2;
 
-	public Roleplay(String[] input) {
-		for (int i = 0; i < input.length; i++) {
-			String[] split = input[i].split(" ");
-			if (i == 0) {
-				roles = Integer.parseInt(split[0]);
-				stages = Integer.parseInt(split[1]);
-				actors = Integer.parseInt(split[2]);
+			if(k < 3)
+				k = 3;
+
+			System.out.println(n + " " + s + " " + k);
+			
+			/* Let all roles be played by any actor (except divas) */
+			StringBuilder sb = new StringBuilder("" + (k-2));
+			for(int i = 1; i <= k-2; i++){
+				sb.append(" " + (i+2));
 			}
-			edges = new ArrayList[roles + 2];
-			for (int j = 1; j < split.length; j++) {
-				if (i < roles) {
-					continue;
-				} else {
-					int k = Integer.parseInt(split[j]);
-					for (int l = 1; l < split.length; l++) {
-						if (l != j) {
-							addEdge(k, Integer.parseInt(split[l]));
-						}
-					}
-				}
+				/* roles */
+			for(int i = 1; i < n; i++){
+				System.out.println(sb.toString());
 			}
+			System.out.println("2 1 2"); //last fictional node have divas 1 & 2
+
+			for(int i = 0; i < s; i++){
+				int n1 = io.getInt();
+				int n2 = io.getInt();
+				System.out.println("3 " + n1 + " " + n2 + " " + n);
+			}
+
+			io.close();
 		}
-		for (int i = 1; i < edges.length - 1; i++) {
-			addEdge(i, edges.length - 1);
+
+		public static void main(String[] args){
+			new Roleplay();
 		}
 	}
-
-	boolean solvable() {
-		return new GraphColor().solvableGraph(roles + 1, edges, actors);
-	}
-
-	void addEdge(int x, int y) {
-		if (edges[x] == null)
-			edges[x] = new ArrayList<Edge>();
-		for (int i = 0; i < edges[x].size(); i++) {
-			if (y == edges[x].get(i).y)
-				return;
-		}
-		numE++;
-		edges[x].add(new Edge(x, y));
-		if (edges[y] == null)
-			edges[y] = new ArrayList<Edge>();
-		edges[y].add(new Edge(y, x).inverse());
-	}
-
-	public void printKattis() {
-		System.out.println(roles + 1);
-		System.out.println(numE);
-		System.out.println(actors);
-		for (int i = 0; i < edges.length; i++) {
-			if (edges[i] == null)
-				continue;
-			for (int j = 0; j < edges[i].size(); j++) {
-				Edge e = edges[i].get(j);
-				if (!e.inverse) {
-					System.out.println(i + " " + e.y);
-				}
-			}
-		}
-	}
-
-	public static void main(String[] args) {
-		new Roleplay();
-	}
-}
