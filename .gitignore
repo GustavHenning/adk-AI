@@ -1,4 +1,5 @@
 *.class
+AI/.metadata
 .metadata
 .recommenders
 .classpath
