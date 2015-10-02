@@ -2,7 +2,7 @@ import java.text.*;
 
 /** This class implements a Hidden Markov Model, as well as
     the Baum-Welch Algorithm for training HMMs.
-    @author Holger Wunsch (wunsch@sfs.nphil.uni-tuebingen.de) 
+    @author Holger Wunsch (wunsch@sfs.nphil.uni-tuebingen.de)
 */
 public class HMM {
   /** number of states */
@@ -22,7 +22,7 @@ public class HMM {
 
   /** initializes an HMM.
       @param numStates number of states
-      @param sigmaSize size of output vocabulary 
+      @param sigmaSize size of output vocabulary
   */
   public HMM(int numStates, int sigmaSize) {
     this.numStates = numStates;
@@ -56,7 +56,7 @@ public class HMM {
       for (int i = 0; i < numStates; i++)
 	pi1[i] = gamma(i, 0, o, fwd, bwd);
 
-      /* re-estimation of transition probabilities */ 
+      /* re-estimation of transition probabilities */
       for (int i = 0; i < numStates; i++) {
 	for (int j = 0; j < numStates; j++) {
 	  double num = 0;
@@ -68,13 +68,13 @@ public class HMM {
 	  a1[i][j] = divide(num, denom);
 	}
       }
-      
+
       /* re-estimation of emission probabilities */
       for (int i = 0; i < numStates; i++) {
 	for (int k = 0; k < sigmaSize; k++) {
 	  double num = 0;
 	  double denom = 0;
-	  
+
 	  for (int t = 0; t <= T - 1; t++) {
 	    double g = gamma(i, t, o, fwd, bwd);
 	    num += g * (k == o[t] ? 1 : 0);
@@ -88,18 +88,18 @@ public class HMM {
       b = b1;
     }
   }
-  
+
 
   /** calculation of Forward-Variables f(i,t) for state i at time
       t for output sequence O with the current HMM parameters
       @param o the output sequence O
       @return an array f(i,t) over states and times, containing
-              the Forward-variables. 
+              the Forward-variables.
   */
   public double[][] forwardProc(int[] o) {
     int T = o.length;
     double[][] fwd = new double[numStates][T];
-        
+
     /* initialization (time 0) */
     for (int i = 0; i < numStates; i++)
       fwd[i][0] = pi[i] * b[i][o[0]];
@@ -121,12 +121,12 @@ public class HMM {
       t for output sequence O with the current HMM parameters
       @param o the output sequence O
       @return an array b(i,t) over states and times, containing
-              the Backward-Variables. 
+              the Backward-Variables.
   */
   public double[][] backwardProc(int[] o) {
     int T = o.length;
     double[][] bwd = new double[numStates][T];
-        
+
     /* initialization (time 0) */
     for (int i = 0; i < numStates; i++)
       bwd[i][T-1] = 1;
@@ -183,14 +183,14 @@ public class HMM {
     DecimalFormat fmt = new DecimalFormat();
     fmt.setMinimumFractionDigits(5);
     fmt.setMaximumFractionDigits(5);
-    
+
     for (int i = 0; i < numStates; i++)
       System.err.println("pi(" + i + ") = " + fmt.format(pi[i]));
     System.err.println();
 
     for (int i = 0; i < numStates; i++) {
       for (int j = 0; j < numStates; j++)
-	System.err.print("a(" + i + "," + j + ") = " + 
+	System.err.print("a(" + i + "," + j + ") = " +
 			 fmt.format(a[i][j]) + "  ");
       System.err.println();
     }
@@ -198,7 +198,7 @@ public class HMM {
     System.err.println();
     for (int i = 0; i < numStates; i++) {
       for (int k = 0; k < sigmaSize; k++)
-	System.err.print("b(" + i + "," + k + ") = " + 
+	System.err.print("b(" + i + "," + k + ") = " +
 			 fmt.format(b[i][k]) + "  ");
       System.err.println();
     }

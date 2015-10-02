@@ -1,237 +1,236 @@
-import java.text.*;
 
-/**
- * This class implements a Hidden Markov Model, as well as the Baum-Welch
- * Algorithm for training HMMs.
- * 
- * @author Holger Wunsch (wunsch@sfs.nphil.uni-tuebingen.de)
- */
 public class HMM {
-	/** number of states */
-	public int numStates;
-
-	/** size of output vocabulary */
-	public int sigmaSize;
-
-	/** initial state probabilities */
-	public double pi[];
-
-	/** transition probabilities */
-	public double a[][];
-
-	/** emission probabilities */
-	public double b[][];
+	public double[] scale;
+	/* emissions, initial, transitions, alpha, beta, gamma */
+	private double[][] emis, init, trans, a, b, g;
+	private double[][][] xi;
 
 	/**
-	 * initializes an HMM.
+	 * Baum-Welcher Forward/Backward Hidden Markov Model. Assumes that all
+	 * columns have same length.
 	 * 
-	 * @param numStates
-	 *            number of states
-	 * @param sigmaSize
-	 *            size of output vocabulary
+	 * @param emissions
+	 * @param transitions
+	 * @param initial
 	 */
-	public HMM(int numStates, int sigmaSize) {
-		this.numStates = numStates;
-		this.sigmaSize = sigmaSize;
-
-		pi = new double[numStates];
-		a = new double[numStates][numStates];
-		b = new double[numStates][sigmaSize];
+	public HMM(double[][] emissions, double[][] transitions, double[][] initial) {
+		emis = emissions;
+		trans = transitions;
+		init = initial;
 	}
 
 	/**
-	 * implementation of the Baum-Welch Algorithm for HMMs.
+	 * Reestimates transitions and emissions based on the sequence omitted.
 	 * 
-	 * @param o
-	 *            the training set
-	 * @param steps
-	 *            the number of steps
+	 * @param seq:
+	 *            The sequence to train on
 	 */
-	public void train(int[] o, int steps) {
-		int T = o.length;
-		double[][] fwd;
-		double[][] bwd;
+	public void train(double[] seq) {
+		if (g == null || xi == null) {
+			System.err.println("HMM previously untrained");
+		}
+		forward(seq);
+		backward(seq);
+		gamma(seq);
+		setEmissions(seq);
+	}
 
-		double pi1[] = new double[numStates];
-		double a1[][] = new double[numStates][numStates];
-		double b1[][] = new double[numStates][sigmaSize];
+	/* Calculates forward probabilities alpha(a) */
+	private void forward(double[] seq) {
+		a = new double[seq.length][lenRows(trans)];
+		scale = new double[seq.length];
 
-		for (int s = 0; s < steps; s++) {
-			/*
-			 * calculation of Forward- und Backward Variables from the current
-			 * model
-			 */
-			fwd = forwardProc(o);
-			bwd = backwardProc(o);
+		/* init a */
+		int s = (int) seq[0];
+		for (int i = 0; i < lenRows(trans); i++) {
+			a[0][i] = init[0][i] * emis[i][s];
+			scale[0] += a[0][i];
+		}
+		/* apply scale */
+		scale[0] = 1 / scale[0];
+		for (int i = 0; i < lenRows(trans); i++) {
+			a[0][i] *= scale[0];
+		}
+		/* set alpha(a) */
+		for (int i = 1; i < seq.length; i++) {
+			scale[i] = 0;
+			for (int j = 0; j < lenRows(trans); j++) {
+				double p = 0;
+				for (int k = 0; k < lenRows(trans); k++) {
+					p += a[i - 1][k] * trans[k][j];
+				}
+				s = (int) seq[i];
+				a[i][j] = p * emis[j][s];
+				scale[i] += a[i][j];
+			}
+			/* scale alpha(a) */
+			scale[i] = 1 / scale[i];
+			for (int j = 0; j < lenRows(trans); j++) {
+				a[i][j] *= scale[i];
+			}
+		}
+	}
 
-			/* re-estimation of initial state probabilities */
-			for (int i = 0; i < numStates; i++)
-				pi1[i] = gamma(i, 0, o, fwd, bwd);
+	/* Calculates backwards probabilities beta(b) */
+	private void backward(double[] seq) {
+		int r = seq.length;
+		int c = lenRows(trans);
 
-			/* re-estimation of transition probabilities */
-			for (int i = 0; i < numStates; i++) {
-				for (int j = 0; j < numStates; j++) {
-					double num = 0;
-					double denom = 0;
-					for (int t = 0; t <= T - 1; t++) {
-						num += p(t, i, j, o, fwd, bwd);
-						denom += gamma(i, t, o, fwd, bwd);
-					}
-					a1[i][j] = divide(num, denom);
+		/* init beta(b) */
+		b = new double[r][c];
+		for (int i = 0; i < c; i++) {
+			b[r - 1][i] = scale[r - 1];
+		}
+		/* set beta(b) */
+		for (int i = r - 2; i >= 0; i--) {
+			int s = (int) seq[i + 1]; /* cause for er? */
+			for (int j = 0; j < c; j++) {
+				b[i][j] = 0;
+
+				for (int k = 0; k < c; k++) {
+					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k];
+				}
+				/* scale b */
+				b[i][j] *= scale[i];
+			}
+		}
+	}
+
+	/* sets gamma(g) by calculating xi */
+	private void gamma(double[] seq) {
+		int r = seq.length;
+		int c = lenRows(trans);
+
+		g = new double[r][c];
+		xi = new double[r][c][c];
+
+		for (int i = 0; i < r - 1; i++) {
+			/* get d */
+			double d = 0;
+			for (int j = 0; j < c; j++) {
+				for (int k = 0; k < c; k++) {
+					d += (a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k]);
 				}
 			}
-
-			/* re-estimation of emission probabilities */
-			for (int i = 0; i < numStates; i++) {
-				for (int k = 0; k < sigmaSize; k++) {
-					double num = 0;
-					double denom = 0;
-
-					for (int t = 0; t <= T - 1; t++) {
-						double g = gamma(i, t, o, fwd, bwd);
-						num += g * (k == o[t] ? 1 : 0);
-						denom += g;
-					}
-					b1[i][k] = divide(num, denom);
+			/* set xi */
+			for (int j = 0; j < c; j++) {
+				g[i][j] = 0;
+				for (int k = 0; k < c; k++) {
+					xi[i][j][k] = ((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]] * b[i + 1][k])) / d;
+					g[i][j] = xi[i][j][k];
 				}
 			}
-			pi = pi1;
-			a = a1;
-			b = b1;
 		}
+
 	}
 
 	/**
-	 * calculation of Forward-Variables f(i,t) for state i at time t for output
-	 * sequence O with the current HMM parameters
+	 * Assuming forward, backward and gamma are set, updates transitions and
+	 * emissions.
 	 * 
-	 * @param o
-	 *            the output sequence O
-	 * @return an array f(i,t) over states and times, containing the
-	 *         Forward-variables.
+	 * @param seq
 	 */
-	public double[][] forwardProc(int[] o) {
-		int T = o.length;
-		double[][] fwd = new double[numStates][T];
-
-		/* initialization (time 0) */
-		for (int i = 0; i < numStates; i++)
-			fwd[i][0] = pi[i] * b[i][o[0]];
-
-		/* induction */
-		for (int t = 0; t <= T - 2; t++) {
-			for (int j = 0; j < numStates; j++) {
-				fwd[j][t + 1] = 0;
-				for (int i = 0; i < numStates; i++)
-					fwd[j][t + 1] += (fwd[i][t] * a[i][j]);
-				fwd[j][t + 1] *= b[j][o[t + 1]];
+	private void setEmissions(double[] seq) {
+		/* set init values */
+		for (int i = 0; i < lenCols(init); i++) {
+			init[0][i] = g[0][i];
+		}
+		/* update transitions */
+		for (int i = 0; i < lenRows(trans); i++) {
+			for (int j = 0; j < lenCols(trans); j++) {
+				double t = 0, d = 0;
+				for (int k = 0; k < seq.length; k++) {
+					t += xi[k][i][j];
+					d += g[k][i];
+				}
+				trans[i][j] = t / d;
 			}
 		}
-
-		return fwd;
-	}
-
-	/**
-	 * calculation of Backward-Variables b(i,t) for state i at time t for output
-	 * sequence O with the current HMM parameters
-	 * 
-	 * @param o
-	 *            the output sequence O
-	 * @return an array b(i,t) over states and times, containing the
-	 *         Backward-Variables.
-	 */
-	public double[][] backwardProc(int[] o) {
-		int T = o.length;
-		double[][] bwd = new double[numStates][T];
-
-		/* initialization (time 0) */
-		for (int i = 0; i < numStates; i++)
-			bwd[i][T - 1] = 1;
-
-		/* induction */
-		for (int t = T - 2; t >= 0; t--) {
-			for (int i = 0; i < numStates; i++) {
-				bwd[i][t] = 0;
-				for (int j = 0; j < numStates; j++)
-					bwd[i][t] += (bwd[j][t + 1] * a[i][j] * b[j][o[t + 1]]);
+		/* update emissions */
+		for (int i = 0; i < lenRows(trans); i++) { /* emis? */
+			for (int j = 0; j < lenCols(emis); j++) {
+				double t = 0, d = 0;
+				for (int k = 0; k < seq.length; k++) {
+					if (seq[k] == j) {
+						t += g[k][i];
+					}
+					d += g[k][i];
+				}
+				emis[i][j] = t / d;
 			}
 		}
-
-		return bwd;
 	}
 
 	/**
-	 * calculation of probability P(X_t = s_i, X_t+1 = s_j | O, m).
+	 * Returns the emission probability distribution of state (i+1) assuming
+	 * current state i
 	 * 
-	 * @param t
-	 *            time t
-	 * @param i
-	 *            the number of state s_i
-	 * @param j
-	 *            the number of state s_j
-	 * @param o
-	 *            an output sequence o
-	 * @param fwd
-	 *            the Forward-Variables for o
-	 * @param bwd
-	 *            the Backward-Variables for o
-	 * @return P
+	 * @return
 	 */
-	public double p(int t, int i, int j, int[] o, double[][] fwd, double[][] bwd) {
-		double num;
-		if (t == o.length - 1)
-			num = fwd[i][t] * a[i][j];
-		else
-			num = fwd[i][t] * a[i][j] * b[j][o[t + 1]] * bwd[j][t + 1];
+	public double[][] nextEmissionProbabilities() {
+		double[] next = new double[lenCols(init)];
 
-		double denom = 0;
-
-		for (int k = 0; k < numStates; k++)
-			denom += (fwd[k][t] * bwd[k][t]);
-
-		return divide(num, denom);
-	}
-
-	/** computes gamma(i, t) */
-	public double gamma(int i, int t, int[] o, double[][] fwd, double[][] bwd) {
-		double num = fwd[i][t] * bwd[i][t];
-		double denom = 0;
-
-		for (int j = 0; j < numStates; j++)
-			denom += fwd[j][t] * bwd[j][t];
-
-		return divide(num, denom);
-	}
-
-	/** prints all the parameters of an HMM */
-	public void print() {
-		DecimalFormat fmt = new DecimalFormat();
-		fmt.setMinimumFractionDigits(5);
-		fmt.setMaximumFractionDigits(5);
-
-		for (int i = 0; i < numStates; i++)
-			System.err.println("pi(" + i + ") = " + fmt.format(pi[i]));
-		System.err.println();
-
-		for (int i = 0; i < numStates; i++) {
-			for (int j = 0; j < numStates; j++)
-				System.err.print("a(" + i + "," + j + ") = " + fmt.format(a[i][j]) + "  ");
-			System.err.println();
+		for (int i = 0; i < lenRows(trans); i++) {
+			double state = init[0][i];
+			for (int j = 0; j < lenCols(trans); j++) {
+				next[j] += state * trans[i][j];
+			}
 		}
+		
+		double[][] dist = new double[1][lenCols(emis)];
 
-		System.err.println();
-		for (int i = 0; i < numStates; i++) {
-			for (int k = 0; k < sigmaSize; k++)
-				System.err.print("b(" + i + "," + k + ") = " + fmt.format(b[i][k]) + "  ");
-			System.err.println();
+		for (int j = 0; j < lenCols(emis); j++) {
+			for (int i = 0; i < lenRows(emis); i++) {
+				dist[0][j] += next[i] * trans[i][j];
+			}
+		}
+		return dist;
+	}
+
+	/**
+	 * @return The emissions of the current state
+	 */
+	public double[][] getEmissions() {
+		return emis;
+	}
+
+	/**
+	 * 
+	 * @return The transitions of the current state
+	 */
+	public double[][] getTransitions() {
+		return trans;
+	}
+
+	public double[][] getMatrix(Kattio io){
+		return null;		
+	}
+	
+	public void printMatrix(double[][] m, String name) {
+		if (name != null)
+			System.err.println(name);
+		for (int i = 0; i < m.length; i++) {
+			for (int j = 0; j < m[i].length; j++) {
+				System.out.printf("%d ", m[i][j]);
+			}
+			System.out.println();
 		}
 	}
 
-	/** divides two doubles. 0 / 0 = 0! */
-	public double divide(double n, double d) {
-		if (n == 0)
-			return 0;
-		else
-			return n / d;
+	/* Helping methods */
+	private int lenRows(double[][] ar) {
+		if (ar.length <= 0) {
+			System.err.println("RowLengthError: Rows of an array is of length 0. ");
+			System.exit(1);
+		}
+		return ar.length > 0 ? ar.length : -1;
+	}
+
+	private int lenCols(double[][] ar) {
+		if (ar.length <= 0 || (ar.length > 0 && ar[0].length == 0)) {
+			System.err.println("ColLengthError: Columns of an array is of length 0. ");
+			System.exit(1);
+		}
+		return ar.length > 0 ? ar[0].length : -1;
 	}
 }

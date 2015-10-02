@@ -1,7 +1,5 @@
 
 class Player {
-	private HMM species;
-	private HMM moves;
 	// /constructor
 
 	// /There is no data in the beginning, so not much should be done here.
@@ -28,16 +26,11 @@ class Player {
 	 */
 	public Action shoot(GameState pState, Deadline pDue) {
 		//System.err.println("Shoot code reached ");
-		if (moves == null)
-			moves = new HMM(pState.getNumBirds(), Constants.COUNT_MOVE); /* one for moves or for each bird? */
-		if (species == null)
-			species = new HMM(pState.getNumBirds(), Constants.COUNT_SPECIES);/* one for each species or bird? */
 
 		int[] birdStates = new int[pState.getNumBirds()];
 		for (int i = 0; i < birdStates.length; i++) {
 			birdStates[i] = pState.getBird(i).getLastObservation();
 		}
-		moves.train(birdStates, 1 /* should this increase? */);
 		if (pState.getNumNewTurns() < 10) {
 			// This line chooses not to shoot
 			return cDontShoot;
