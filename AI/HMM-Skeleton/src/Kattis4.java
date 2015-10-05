@@ -21,30 +21,18 @@ public class Kattis4 {
 		 * 
 		 * https://hips.seas.harvard.edu/blog/2013/01/09/computing-log-sum-exp/
 		 */
-		double erLimit = 1.0E-5;
+		double erLimit = 1.0E-20;
 		int i = 0;
 		hmm.train(seq);
-		while(i < MAX_TRAIN) {
+		while (i < MAX_TRAIN) {
 			double before = logScaleSum(hmm.scale);
 			hmm.train(seq);
-			System.out.println(Math.abs(logScaleSum(hmm.scale) - before));
-			if(Math.abs(logScaleSum(hmm.scale) - before) < erLimit){
+			// System.out.println(Math.abs(logScaleSum(hmm.scale) - before));
+			if (Math.abs(logScaleSum(hmm.scale) - before) < erLimit) {
 				System.err.println(i + " iterations");
 				break;
 			}
-			
-			
-//			double p = 0;
-//			for (int j = 0; j < seq.length; j++) {
-//				p += Math.log(hmm.scale[i]) / Math.log(10);
-//			}
-//			p *= -1;
-//			if (p > pDeclineLimit) {
-//				pDeclineLimit = p;
-//			} else {
-//				System.err.println(i + " times trained");
-//				break;
-//			}
+
 			i++;
 		}
 		System.err.println("trans");
@@ -54,14 +42,14 @@ public class Kattis4 {
 
 	}
 
-	public static double logScaleSum(double[] scale){
+	public static double logScaleSum(double[] scale) {
 		double sum = 0;
-		for(int i = 0; i < scale.length; i++){
+		for (int i = 0; i < scale.length; i++) {
 			sum += Math.log10(scale[i]);
 		}
 		return sum;
 	}
-	
+
 	public static void prettyPrint(double[][] mat) {
 		int r = HMM.lenRows(mat);
 		int c = HMM.lenCols(mat);
