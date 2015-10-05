@@ -105,18 +105,18 @@ public class HMM {
 
 		for (int i = 0; i < r - 1; i++) {
 			/* get d */
-			double d = UNDERFLOW_PREV;
+			double d = 0;
 			for (int j = 0; j < c; j++) {
 				for (int k = 0; k < c; k++) {
-					d += (a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k]);
+					d += (a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k]) + UNDERFLOW_PREV;
 				}
 			}
 			/* set xi */
 			for (int j = 0; j < c; j++) {
 				g[i][j] = 0;
 				for (int k = 0; k < c; k++) {
-					xi[i][j][k] = ((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d;
-					g[i][j] = xi[i][j][k] + UNDERFLOW_PREV;
+					xi[i][j][k] = (((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d) + UNDERFLOW_PREV;
+					g[i][j] += xi[i][j][k];
 				}
 			}
 		}
@@ -137,25 +137,25 @@ public class HMM {
 		/* update transitions */
 		for (int i = 0; i < lenRows(trans); i++) {
 			for (int j = 0; j < lenCols(trans); j++) {
-				double t = UNDERFLOW_PREV, d = UNDERFLOW_PREV;
+				double t = 0, d = 0;
 				for (int k = 0; k < seq.length; k++) { 
 					t += xi[k][i][j];
 					d += g[k][i];
 				}
-				trans[i][j] = t / d;
+				trans[i][j] = (t / d) + UNDERFLOW_PREV;
 			}
 		}
 		/* update emissions */
 		for (int i = 0; i < lenRows(trans); i++) { /* emis? */
 			for (int j = 0; j < lenCols(emis); j++) {
-				double t = UNDERFLOW_PREV, d = UNDERFLOW_PREV;
+				double t = 0, d = 0;
 				for (int k = 0; k < seq.length - 1; k++) {
 					if (seq[k] == j) {
 						t += g[k][i];
 					}
 					d += g[k][i];
 				}
-				emis[i][j] = t / d;
+				emis[i][j] = (t / d) + UNDERFLOW_PREV;
 			}
 		}
 	}
