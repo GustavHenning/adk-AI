@@ -4,6 +4,8 @@ public class HMM {
 	/* emissions, initial, transitions, alpha, beta, gamma */
 	protected double[][] emis, init, trans, a, b, g;
 	protected double[][][] xi;
+	
+	private final double UNDERFLOW_PREV = 1.0E-20;
 
 	/**
 	 * Baum-Welcher Forward/Backward Hidden Markov Model.
@@ -41,7 +43,7 @@ public class HMM {
 		/* init a */
 		int s = (int) seq[0];
 		for (int i = 0; i < lenRows(trans); i++) {
-			a[0][i] = init[0][i] * emis[i][s];
+			a[0][i] = init[0][i] * emis[i][s] + UNDERFLOW_PREV;
 			scale[0] += a[0][i];
 		}
 		/* apply scale */
@@ -57,7 +59,7 @@ public class HMM {
 					p += a[i - 1][k] * trans[k][j];
 				}
 				s = (int) seq[i];
-				a[i][j] = p * emis[j][s];
+				a[i][j] = p * emis[j][s] + UNDERFLOW_PREV;
 				scale[i] += a[i][j];
 			}
 			/* scale alpha(a) */
@@ -85,7 +87,7 @@ public class HMM {
 				b[i][j] = 0;
 
 				for (int k = 0; k < c; k++) {
-					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k];
+					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k] + UNDERFLOW_PREV;
 				}
 				/* scale b */
 				b[i][j] *= scale[i];
@@ -103,7 +105,7 @@ public class HMM {
 
 		for (int i = 0; i < r - 1; i++) {
 			/* get d */
-			double d = 0;
+			double d = UNDERFLOW_PREV;
 			for (int j = 0; j < c; j++) {
 				for (int k = 0; k < c; k++) {
 					d += (a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k]);
@@ -113,8 +115,8 @@ public class HMM {
 			for (int j = 0; j < c; j++) {
 				g[i][j] = 0;
 				for (int k = 0; k < c; k++) {
-					xi[i][j][k] = ((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]] * b[i + 1][k])) / d;
-					g[i][j] = xi[i][j][k];
+					xi[i][j][k] = ((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d;
+					g[i][j] = xi[i][j][k] + UNDERFLOW_PREV;
 				}
 			}
 		}
@@ -135,8 +137,8 @@ public class HMM {
 		/* update transitions */
 		for (int i = 0; i < lenRows(trans); i++) {
 			for (int j = 0; j < lenCols(trans); j++) {
-				double t = 0, d = 0;
-				for (int k = 0; k < seq.length - 1; k++) { /* -1 or not? */
+				double t = UNDERFLOW_PREV, d = UNDERFLOW_PREV;
+				for (int k = 0; k < seq.length; k++) { 
 					t += xi[k][i][j];
 					d += g[k][i];
 				}
@@ -146,7 +148,7 @@ public class HMM {
 		/* update emissions */
 		for (int i = 0; i < lenRows(trans); i++) { /* emis? */
 			for (int j = 0; j < lenCols(emis); j++) {
-				double t = 0, d = 0;
+				double t = UNDERFLOW_PREV, d = UNDERFLOW_PREV;
 				for (int k = 0; k < seq.length - 1; k++) {
 					if (seq[k] == j) {
 						t += g[k][i];

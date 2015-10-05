@@ -16,34 +16,52 @@ public class Kattis4 {
 		double[] seq = HMM.getVector(io);
 
 		HMM hmm = new HMM(transM, emisM, initM);
-
 		/**
 		 * We train the HMM until the sum of the scale converges.
 		 * 
 		 * https://hips.seas.harvard.edu/blog/2013/01/09/computing-log-sum-exp/
 		 */
-		double pDeclineLimit = Integer.MIN_VALUE;
-		for (int i = 0; i < MAX_TRAIN; i++) {
+		double erLimit = 1.0E-5;
+		int i = 0;
+		hmm.train(seq);
+		while(i < MAX_TRAIN) {
+			double before = logScaleSum(hmm.scale);
 			hmm.train(seq);
-			
-			double p = 0;
-			for (int j = 0; j < seq.length; j++) {
-				p += Math.log10(hmm.scale[i]);
-			}
-			p *= -1;
-			if (p > pDeclineLimit) {
-				pDeclineLimit = p;
-			} else {
-				System.err.println(i + " times trained");
+			System.out.println(Math.abs(logScaleSum(hmm.scale) - before));
+			if(Math.abs(logScaleSum(hmm.scale) - before) < erLimit){
+				System.err.println(i + " iterations");
 				break;
 			}
+			
+			
+//			double p = 0;
+//			for (int j = 0; j < seq.length; j++) {
+//				p += Math.log(hmm.scale[i]) / Math.log(10);
+//			}
+//			p *= -1;
+//			if (p > pDeclineLimit) {
+//				pDeclineLimit = p;
+//			} else {
+//				System.err.println(i + " times trained");
+//				break;
+//			}
+			i++;
 		}
-		HMM.printVector(hmm.scale);
+		System.err.println("trans");
 		prettyPrint(hmm.trans);
+		System.err.println("emis");
 		prettyPrint(hmm.emis);
 
 	}
 
+	public static double logScaleSum(double[] scale){
+		double sum = 0;
+		for(int i = 0; i < scale.length; i++){
+			sum += Math.log10(scale[i]);
+		}
+		return sum;
+	}
+	
 	public static void prettyPrint(double[][] mat) {
 		int r = HMM.lenRows(mat);
 		int c = HMM.lenCols(mat);
