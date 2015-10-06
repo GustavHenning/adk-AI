@@ -107,13 +107,6 @@ class Player {
 	/**
 	 * If you hit the bird you were trying to shoot, you will be notified
 	 * through this function.
-	 *
-	 * @param pState
-	 *            the GameState object with observations etc
-	 * @param pBird
-	 *            the bird you hit
-	 * @param pDue
-	 *            time before which we must have returned
 	 */
 	public void hit(GameState pState, int pBird, Deadline pDue) {
 		System.err.println("HIT BIRD!!!");
@@ -123,13 +116,6 @@ class Player {
 	/**
 	 * If you made any guesses, you will find out the true species of those
 	 * birds through this function.
-	 *
-	 * @param pState
-	 *            the GameState object with observations etc
-	 * @param pSpecies
-	 *            the vector with species
-	 * @param pDue
-	 *            time before which we must have returned
 	 */
 	public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
 		System.err.println("Reveal phase");
