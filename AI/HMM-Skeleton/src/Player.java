@@ -1,79 +1,106 @@
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Random;
 
 class Player {
-	// /constructor
+	private final int actThreshhold = 50, NUM_TRAIN = 100;
+	private int steps = 0, numBirds, round, shotsHit, shotsFired, guessesCorrect, guessesFalse;
+	private LinkedList<HMM>[] modelsBySpecies;
+	int[] lastGuesses;
 
-	// /There is no data in the beginning, so not much should be done here.
 	public Player() {
+		shotsHit = 0;
+		shotsFired = 0;
+		guessesCorrect = 0;
+		guessesFalse = 0;
+		modelsBySpecies = new LinkedList[Constants.COUNT_SPECIES];
+		for (int i = 0; i < modelsBySpecies.length; i++) {
+			modelsBySpecies[i] = new LinkedList<HMM>();
+		}
 	}
 
-	/**
-	 * Shoot!
-	 *
-	 * This is the function where you start your work.
-	 *
-	 * You will receive a variable pState, which contains information about all
-	 * birds, both dead and alive. Each birds contains all past actions.
-	 *
-	 * The state also contains the scores for all players and the number of time
-	 * steps elapsed since the last time this function was called.
-	 *
-	 * @param pState
-	 *            the GameState object with observations etc
-	 * @param pDue
-	 *            time before which we must have returned
-	 * @return the prediction of a bird we want to shoot at, or cDontShoot to
-	 *         pass
-	 */
 	public Action shoot(GameState pState, Deadline pDue) {
-		//System.err.println("Shoot code reached ");
+		// System.err.println("Shoot code reached ");
+		numBirds = pState.getNumBirds();
+		round = pState.getRound();
 
-		int[] birdStates = new int[pState.getNumBirds()];
-		for (int i = 0; i < birdStates.length; i++) {
-			birdStates[i] = pState.getBird(i).getLastObservation();
-		}
-		if (pState.getNumNewTurns() < 10) {
-			// This line chooses not to shoot
-			return cDontShoot;
+		if (steps <= actThreshhold || round == 0) {
+			if (steps == 0)
+				System.err.println("Round: " + round);
 		} else {
-			/*
-			 * Here, out of all alive birds, calculate the most predictable
-			 * bird/move, then shoot
-			 */
+			return act(pState);
 		}
-		// This line choose not to shoot
+		steps++;
 		return cDontShoot;
-		/*
-		 * Here you should write your clever algorithms to get the best action.
-		 * This skeleton never shoots.
-		 */
 
-		// This line would predict that bird 0 will move right and shoot at it
-		// return Action(0, MOVE_RIGHT);
+	}
+
+	public Action act(GameState pState) {
+		Bird b;
+		int[] obs;
+		double[] pObs;
+		int species, moveToMake;
+		double pMax;
+		Iterator<HMM> it;
+		ArrayList<Integer> birdMoves;
+		for (int i = 0; i < numBirds; i++) {
+			b = pState.getBird(i);
+			if (b.isAlive()) {
+				obs = getObs(b);
+				species = identify(obs);
+				pMax = 0;
+				moveToMake = 0;
+				if (species != Constants.SPECIES_UNKNOWN && species != Constants.SPECIES_BLACK_STORK) {
+					it = modelsBySpecies[species].iterator();
+					birdMoves = new ArrayList<Integer>();
+					while (it.hasNext()) {
+						/* hmm */
+					}
+				}
+			}
+		}
+		return cDontShoot;
+	}
+
+	private int[] getObs(Bird b) {
+		int[] obs = new int[b.getSeqLength()];
+		for (int i = 0; i < obs.length; i++) {
+			obs[i] = b.getObservation(i);
+		}
+		return obs;
+	}
+
+	private int identify(int[] obs) {
+		return Constants.SPECIES_UNKNOWN;
 	}
 
 	/**
-	 * Guess the species! This function will be called at the end of each round,
-	 * to give you a chance to identify the species of the birds for extra
-	 * points.
-	 *
 	 * Fill the vector with guesses for the all birds. Use SPECIES_UNKNOWN to
 	 * avoid guessing.
-	 *
-	 * @param pState
-	 *            the GameState object with observations etc
-	 * @param pDue
-	 *            time before which we must have returned
-	 * @return a vector with guesses for all the birds
 	 */
 	public int[] guess(GameState pState, Deadline pDue) {
-		/*
-		 * Here you should write your clever algorithms to guess the species of
-		 * each bird. This skeleton makes no guesses, better safe than sorry!
-		 */
-
+		steps = 0;
 		int[] lGuess = new int[pState.getNumBirds()];
-		for (int i = 0; i < pState.getNumBirds(); ++i)
-			lGuess[i] = Constants.SPECIES_UNKNOWN;
+		Random r = new Random();
+		if (round == 0) {
+			/* First round, make random guesses */
+			System.err.println("First guess");
+			for (int i = 0; i < lGuess.length; i++) {
+				lGuess[i] = r.nextInt(Constants.COUNT_SPECIES - 1);
+			}
+		} else {
+			/* Ordinary round: make qualified guess else random */
+			for (int i = 0; i < numBirds; i++) {
+				Bird b = pState.getBird(i);
+				int[] bObs = getObs(b);
+				int guess = identify(bObs);
+				lGuess[i] = guess != Constants.SPECIES_UNKNOWN ? guess : r.nextInt(Constants.COUNT_SPECIES - 1);
+				System.err.println("For bird #" + i + " my guess was " + guess
+						+ ((guess == Constants.SPECIES_UNKNOWN) ? ": random" : ""));
+			}
+		}
+		lastGuesses = lGuess;
 		return lGuess;
 	}
 
@@ -90,6 +117,7 @@ class Player {
 	 */
 	public void hit(GameState pState, int pBird, Deadline pDue) {
 		System.err.println("HIT BIRD!!!");
+		shotsHit++;
 	}
 
 	/**
@@ -104,6 +132,29 @@ class Player {
 	 *            time before which we must have returned
 	 */
 	public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
+		System.err.println("Reveal phase");
+		for (int i = 0; i < pSpecies.length; i++) {
+			if (pSpecies[i] == lastGuesses[i]) {
+				guessesCorrect++;
+			} else {
+				guessesFalse++;
+			}
+		}
+		/* init hmms */
+		int[] obs;
+		for (int i = 0; i < pSpecies.length; i++) {
+			if (pSpecies[i] != Constants.SPECIES_UNKNOWN || round == 0) {
+				obs = getObs(pState.getBird(i));
+				modelsBySpecies[i]
+						.addLast(new HMM(null, null, null)); /* TODO fix hmm */
+				/* TODO use hmm */
+			}
+		}
+
+		System.err.println("Guess rate: " + guessesCorrect + "/" + (guessesCorrect + guessesFalse) + " : "
+				+ new Double(guessesCorrect / guessesCorrect + guessesFalse) + "%");
+		System.err.println("Hit rate: " + shotsHit + "/" + (shotsHit + shotsFired) + " : "
+				+ new Double(shotsHit / (shotsHit + shotsFired)) + "%");
 	}
 
 	public static final Action cDontShoot = new Action(-1, -1);
