@@ -9,7 +9,7 @@ public class HMM {
 
 	/**
 	 * Baum-Welcher Forward/Backward Hidden Markov Model.
-	 * 
+	 *
 	 * @param transitions
 	 * @param emissions
 	 * @param initial
@@ -22,7 +22,7 @@ public class HMM {
 
 	/**
 	 * Creates a HMM for the Bird shooting problem
-	 * 
+	 *
 	 * @param numMoves
 	 * @param numSpecies
 	 */
@@ -31,7 +31,7 @@ public class HMM {
 		int T = numMoves;
 		init = new double[1][N];
 		trans = new double[N][N];
-		emis = new double[T][N]; /* switch T, N ? */
+		emis = new double[N][T]; /* switch T, N ? */
 
 		/* matrices start values */
 		for (int i = 0; i < N; i++) {
@@ -42,8 +42,8 @@ public class HMM {
 				trans[i][j] = (1.0 / N);
 			}
 		}
-		for (int i = 0; i < T; i++) {
-			for (int j = 0; j < N; j++) {
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < T; j++) {
 				emis[i][j] = (1.0 / T);
 			}
 		}
@@ -52,14 +52,11 @@ public class HMM {
 
 	/**
 	 * Reestimates transitions and emissions based on the sequence omitted.
-	 * 
+	 *
 	 * @param seq:
 	 *            The sequence to train on
 	 */
 	public void train(double[] seq) {
-		if (g == null || xi == null) {
-			System.err.println("HMM previously untrained");
-		}
 		forward(seq);
 		backward(seq);
 		gamma(seq);
@@ -157,7 +154,7 @@ public class HMM {
 	/**
 	 * Assuming forward, backward and gamma are set, updates transitions and
 	 * emissions.
-	 * 
+	 *
 	 * @param seq
 	 */
 	protected void setEmissions(double[] seq) {
@@ -194,7 +191,7 @@ public class HMM {
 	/**
 	 * Returns the emission probability distribution of state (i+1) assuming
 	 * current state i
-	 * 
+	 *
 	 * @return Distribution dist from 1 to N where N is the emission length
 	 */
 	public double[] nextEmissionProbabilities() {
@@ -230,13 +227,12 @@ public class HMM {
 			train(seq);
 			// System.out.println(Math.abs(logScaleSum(hmm.scale) - before));
 			if (Math.abs(logScaleSum(scale) - before) < erLimit) {
-				System.err.println(i + " iterations");
 				break;
 			}
 			i++;
 		}
 	}
-	
+
 	public static double logScaleSum(double[] scale) {
 		double sum = 0;
 		for (int i = 0; i < scale.length; i++) {
@@ -248,7 +244,7 @@ public class HMM {
 	/**
 	 * Inspired by the Viterbi algorithm
 	 * https://en.wikipedia.org/wiki/Viterbi_algorithm
-	 * 
+	 *
 	 * @param seq
 	 * @return statePath: most likely transition of states given a sequence
 	 */
@@ -310,7 +306,7 @@ public class HMM {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return The transitions of the current state
 	 */
 	public double[][] getTransitions() {

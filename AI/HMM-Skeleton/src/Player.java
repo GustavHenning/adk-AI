@@ -5,7 +5,7 @@ import java.util.Random;
 
 class Player {
 	private final int actThreshhold = 50, MAX_TRAIN = 100, MOVE_UNCERTAIN = -1;
-	private final double erLimit = 1.0E-10, SHOOT_THRESHOLD = 0.7;
+	private final double erLimit = 1.0E-10, SHOOT_THRESHOLD = 0.1;
 	private int steps = 0, numBirds, round, shotsHit, shotsFired, guessesCorrect, guessesFalse;
 	private LinkedList<HMM>[] modelsBySpecies;
 	int[] lastGuesses;
@@ -21,7 +21,7 @@ class Player {
 			this.pMax = pMax;
 		}
 	}
-	
+
 	public Player() {
 		shotsHit = 0;
 		shotsFired = 0;
@@ -181,14 +181,15 @@ class Player {
 		for (int i = 0; i < pSpecies.length; i++) {
 			if (pSpecies[i] != Constants.SPECIES_UNKNOWN || round == 0) {
 				obs = getObs(pState.getBird(i));
-				modelsBySpecies[i]
+				modelsBySpecies[pSpecies[i]]
 						.addLast(new HMM(Constants.COUNT_MOVE, Constants.COUNT_SPECIES)); /* TODO fix hmm */
-				modelsBySpecies[i].getLast().estimateMatrices(erLimit, MAX_TRAIN, toDoubleArray(obs));
+				modelsBySpecies[pSpecies[i]].getLast().estimateMatrices(erLimit, MAX_TRAIN, toDoubleArray(obs));
 			}
 		}
-
-		System.err.println("Guess rate: " + guessesCorrect + "/" + (guessesCorrect + guessesFalse) + " : "
+		if(guessesCorrect + guessesFalse > 0)
+			System.err.println("Guess rate: " + guessesCorrect + "/" + (guessesCorrect + guessesFalse) + " : "
 				+ new Double(guessesCorrect / guessesCorrect + guessesFalse) + "%");
+		if(shotsHit + shotsFired > 0)
 		System.err.println("Hit rate: " + shotsHit + "/" + (shotsHit + shotsFired) + " : "
 				+ new Double(shotsHit / (shotsHit + shotsFired)) + "%");
 	}
@@ -200,6 +201,6 @@ class Player {
 		}
 		return dAr;
 	}
-	
+
 	public static final Action cDontShoot = new Action(-1, -1);
 }
