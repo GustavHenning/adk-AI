@@ -1,4 +1,3 @@
-
 public class HMM {
 	public double[] scale;
 	/* emissions, initial, transitions, alpha, beta, gamma */
@@ -9,7 +8,7 @@ public class HMM {
 
 	/**
 	 * Baum-Welcher Forward/Backward Hidden Markov Model.
-	 *
+	 * 
 	 * @param transitions
 	 * @param emissions
 	 * @param initial
@@ -22,39 +21,42 @@ public class HMM {
 
 	/**
 	 * Creates a HMM for the Bird shooting problem
-	 *
+	 * 
 	 * @param numMoves
 	 * @param numSpecies
 	 */
 	public HMM(int numMoves, int numSpecies) {
-		int N = numSpecies;
 		int T = numMoves;
+		int N = numSpecies;
 		init = new double[1][N];
 		trans = new double[N][N];
 		emis = new double[N][T]; /* switch T, N ? */
 
 		/* matrices start values */
 		for (int i = 0; i < N; i++) {
-			init[0][i] = (1.0 / N);
+			init[0][i] = (1.0 / N) + Math.random() * (0.5 / N);
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
-				trans[i][j] = (1.0 / N);
+				if (i == j) {
+					trans[i][j] = (1 / N) + Math.random() * (0.5 / N); /* but why */
+				} else {
+					trans[i][j] = (0.5 / N) + Math.random() * (0.5 / N);
+				}
 			}
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < T; j++) {
-				emis[i][j] = (1.0 / T);
+				emis[i][j] = (1.0 / T) + Math.random() * (0.5 / T);
 			}
 		}
-
 	}
 
 	/**
 	 * Reestimates transitions and emissions based on the sequence omitted.
-	 *
-	 * @param seq:
-	 *            The sequence to train on
+	 * 
+	 * @param seq
+	 *            : The sequence to train on
 	 */
 	public void train(double[] seq) {
 		forward(seq);
@@ -114,7 +116,8 @@ public class HMM {
 				b[i][j] = 0;
 
 				for (int k = 0; k < c; k++) {
-					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k] + UNDERFLOW_PREV;
+					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k]
+							+ UNDERFLOW_PREV;
 				}
 				/* scale b */
 				b[i][j] *= scale[i];
@@ -135,14 +138,17 @@ public class HMM {
 			double d = 0;
 			for (int j = 0; j < c; j++) {
 				for (int k = 0; k < c; k++) {
-					d += (a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k]) + UNDERFLOW_PREV;
+					d += (a[i][j]) * (trans[j][k])
+							* (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])
+							+ UNDERFLOW_PREV;
 				}
 			}
 			/* set xi */
 			for (int j = 0; j < c; j++) {
 				g[i][j] = 0;
 				for (int k = 0; k < c; k++) {
-					xi[i][j][k] = (((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d)
+					xi[i][j][k] = (((a[i][j]) * (trans[j][k])
+							* (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d)
 							+ UNDERFLOW_PREV;
 					g[i][j] += xi[i][j][k];
 				}
@@ -154,7 +160,7 @@ public class HMM {
 	/**
 	 * Assuming forward, backward and gamma are set, updates transitions and
 	 * emissions.
-	 *
+	 * 
 	 * @param seq
 	 */
 	protected void setEmissions(double[] seq) {
@@ -188,10 +194,39 @@ public class HMM {
 		}
 	}
 
+	public double[] normNextEmissionProbabilities(double[] obs) {
+
+		forward(obs);
+
+		int T = obs.length;
+		double sumA = 0;
+		for (int i = 0; i < a[T - 1].length; i++) {
+			sumA += a[T - 1][i];
+		}
+		
+		double[] p = new double[emis[0].length];
+		double tmp;
+
+		for (int i = 0; i < trans.length; i++) {
+			tmp = 0.0;
+			for (int j = 0; j < trans.length; j++) {
+				tmp += trans[j][i] * a[T - 1][j];
+			}
+			// System.err.println(tmp + " " + sumA);
+			for (int o = 0; o < emis[0].length; o++) {
+				for (int s = 0; s < trans.length; s++) {
+					p[o] = (emis[s][o] * tmp) / sumA;
+				}
+			}
+		}
+
+		return p;
+	}
+
 	/**
 	 * Returns the emission probability distribution of state (i+1) assuming
 	 * current state i
-	 *
+	 * 
 	 * @return Distribution dist from 1 to N where N is the emission length
 	 */
 	public double[] nextEmissionProbabilities() {
@@ -213,13 +248,15 @@ public class HMM {
 		}
 		return dist;
 	}
+
 	/**
 	 * For Bird shooting, made estimation of matrices into a separate method.
+	 * 
 	 * @param erLimit
 	 * @param maxTrain
 	 * @param seq
 	 */
-	public void estimateMatrices(double erLimit, int maxTrain, double[] seq){
+	public void estimateMatrices(double erLimit, int maxTrain, double[] seq) {
 		int i = 0;
 		train(seq);
 		while (i < maxTrain) {
@@ -242,9 +279,40 @@ public class HMM {
 	}
 
 	/**
+	 * Calculates the probability of a given sequence
+	 * 
+	 * @param seq
+	 * @return
+	 */
+	public double sequenceProbability(int[] seq) {
+		/* init */
+
+		double p = 0;
+		int nStates = init[0].length;
+		double[][] emissions = new double[nStates][seq.length];
+
+		for (int i = 0; i < nStates; i++) {
+			emissions[i][0] = init[0][i] * emis[i][seq[0]];
+		}
+		for (int e = 0; e <= seq.length - 2; e++) {
+			for (int to = 0; to < nStates; to++) {
+				emissions[to][e + 1] = 0.0;
+				for (int from = 0; from < nStates; from++) {
+					emissions[to][e + 1] += emissions[from][e]
+							* trans[from][to] * emis[to][seq[e + 1]];
+				}
+			}
+		}
+		for (int i = 0; i < emissions.length; i++) {
+			p += emissions[i][emissions.length - 1];
+		}
+		return p;
+	}
+
+	/**
 	 * Inspired by the Viterbi algorithm
 	 * https://en.wikipedia.org/wiki/Viterbi_algorithm
-	 *
+	 * 
 	 * @param seq
 	 * @return statePath: most likely transition of states given a sequence
 	 */
@@ -306,7 +374,7 @@ public class HMM {
 	}
 
 	/**
-	 *
+	 * 
 	 * @return The transitions of the current state
 	 */
 	public double[][] getTransitions() {
@@ -339,6 +407,18 @@ public class HMM {
 		return mat;
 	}
 
+	public static void printMat(double[][] m, String name) {
+		if (name != null)
+			System.err.println(name);
+		System.err.print(m.length + " " + m[0].length);
+		for (int i = 0; i < m.length; i++) {
+			for (int j = 0; j < m[i].length; j++) {
+				System.err.print(" " + m[i][j]);
+			}
+			System.err.println();
+		}
+	}
+
 	public static void printMatrix(double[][] m, String name) {
 		if (name != null)
 			System.err.println(name);
@@ -354,7 +434,8 @@ public class HMM {
 	/* Helping methods */
 	protected static int lenRows(double[][] ar) {
 		if (ar.length <= 0) {
-			System.err.println("RowLengthError: Rows of an array is of length 0. ");
+			System.err
+					.println("RowLengthError: Rows of an array is of length 0. ");
 			System.exit(1);
 		}
 		return ar.length > 0 ? ar.length : -1;
@@ -362,7 +443,8 @@ public class HMM {
 
 	protected static int lenCols(double[][] ar) {
 		if (ar.length <= 0 || (ar.length > 0 && ar[0].length == 0)) {
-			System.err.println("ColLengthError: Columns of an array is of length 0. ");
+			System.err
+					.println("ColLengthError: Columns of an array is of length 0. ");
 			System.exit(1);
 		}
 		return ar.length > 0 ? ar[0].length : -1;

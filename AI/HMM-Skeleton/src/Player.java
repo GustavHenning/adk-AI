@@ -4,24 +4,26 @@ import java.util.LinkedList;
 import java.util.Random;
 
 class Player {
-	private final int actThreshhold = 50, MAX_TRAIN = 100, MOVE_UNCERTAIN = -1;
-	private final double erLimit = 1.0E-10, SHOOT_THRESHOLD = 0.1;
-	private int steps = 0, numBirds, round, shotsHit, shotsFired, guessesCorrect, guessesFalse;
+	private final int actThreshhold = 60, MAX_TRAIN = 100, MOVE_UNCERTAIN = -1;
+	private final double erLimit = 1.0E-15, SHOOT_THRESHOLD = 0.8;
+	private int steps = 0, numBirds, round, shotsHit, shotsFired,
+			guessesCorrect, guessesFalse;
 	private LinkedList<HMM>[] modelsBySpecies;
 	int[] lastGuesses;
 
-	public class PredictMove{
+	public class PredictMove {
 		public int bird;
 		public int move;
 		public double pMax;
 
-		public PredictMove(int bird, int move, double pMax){
+		public PredictMove(int bird, int move, double pMax) {
 			this.bird = bird;
 			this.move = move;
 			this.pMax = pMax;
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public Player() {
 		shotsHit = 0;
 		shotsFired = 0;
@@ -65,14 +67,15 @@ class Player {
 				species = identify(obs);
 				pMax = 0; /* Threshold? */
 				moveToMake = MOVE_UNCERTAIN;
-				if (species != Constants.SPECIES_UNKNOWN && species != Constants.SPECIES_BLACK_STORK) {
+				if (species != Constants.SPECIES_UNKNOWN
+						&& species != Constants.SPECIES_BLACK_STORK) {
 					it = modelsBySpecies[species].iterator();
 					birdMoves = new ArrayList<Integer>();
 					while (it.hasNext()) {
 						/* TODO train on obs? */
-						pObs = it.next().nextEmissionProbabilities();
-						for(int j = 0; j < pObs.length; j++){
-							if(pObs[j] > pMax){
+						pObs = it.next().normNextEmissionProbabilities(toDoubleArray(obs));
+						for (int j = 0; j < pObs.length; j++) {
+							if (pObs[j] > pMax) {
 								pMax = pObs[j];
 								moveToMake = j;
 							}
@@ -80,13 +83,13 @@ class Player {
 						birdMoves.add(moveToMake);
 					}
 					boolean modelsAgree = true;
-					for(int j = 1; j < birdMoves.size(); j++){
-						if(birdMoves.get(i-1) != birdMoves.get(i)){
+					for (int j = 1; j < birdMoves.size(); j++) {
+						if (birdMoves.get(j - 1) != birdMoves.get(j)) {
 							modelsAgree = false;
 							break;
 						}
 					}
-					if(modelsAgree && moveToMake != MOVE_UNCERTAIN){
+					if (modelsAgree && moveToMake != MOVE_UNCERTAIN) {
 						probableMoves.add(new PredictMove(i, moveToMake, pMax));
 					}
 				}
@@ -95,17 +98,20 @@ class Player {
 			pMax = 0;
 			moveToMake = MOVE_UNCERTAIN;
 			int bird = -1;
-			PredictMove pm = new PredictMove(-1, -1, -1.0);
-			while(iter.hasNext()){
+			PredictMove pm;
+			while (iter.hasNext()) {
 				pm = iter.next();
-				if(pm.pMax > pMax){
+				if (pm.pMax > pMax) {
 					pMax = pm.pMax;
 					moveToMake = pm.move;
 					bird = pm.bird;
 				}
 			}
-			if(pMax > SHOOT_THRESHOLD && moveToMake != MOVE_UNCERTAIN && bird != -1){
+//			System.err.println(pMax + " " + moveToMake + " " + bird);
+			if (pMax > SHOOT_THRESHOLD && moveToMake != MOVE_UNCERTAIN
+					&& bird != -1) {
 				shotsFired++;
+				System.err.println("Round " + round + " step " + steps + " shooting bird " + bird + " " + pMax*100 + "% move " + moveToMake);
 				steps++;
 				return new Action(bird, moveToMake);
 			}
@@ -114,7 +120,11 @@ class Player {
 	}
 
 	private int[] getObs(Bird b) {
-		int[] obs = new int[b.getSeqLength()];
+		int a = b.getSeqLength() - 1;
+		while (!b.wasAlive(a)) {
+			a--;
+		}
+		int[] obs = new int[a];
 		for (int i = 0; i < obs.length; i++) {
 			obs[i] = b.getObservation(i);
 		}
@@ -125,19 +135,16 @@ class Player {
 		double pMax = 0;
 		int speciesGuess = Constants.SPECIES_UNKNOWN;
 		Iterator<HMM> iter;
-		for(int i = 0; i < modelsBySpecies.length; i++){
+		for (int i = 0; i < modelsBySpecies.length; i++) {
 			iter = modelsBySpecies[i].iterator();
-			while(iter.hasNext()){
-				double[] pEmis = iter.next().nextEmissionProbabilities();
-				for(int j = 0; j < pEmis.length; j++){
-					if(pEmis[j] > pMax){
-						pMax = pEmis[j];
-						speciesGuess = i; /* j? */
-					}
+			while (iter.hasNext()) {
+				double pSeq = iter.next().sequenceProbability(obs);
+				if (pSeq > pMax) {
+					pMax = pSeq;
+					speciesGuess = i;
 				}
 			}
 		}
-		
 		return speciesGuess;
 	}
 
@@ -161,9 +168,14 @@ class Player {
 				Bird b = pState.getBird(i);
 				int[] bObs = getObs(b);
 				int guess = identify(bObs);
-				lGuess[i] = guess != Constants.SPECIES_UNKNOWN ? guess : r.nextInt(Constants.COUNT_SPECIES - 1);
-				System.err.println("For bird #" + i + " my guess was " + guess
-						+ ((guess == Constants.SPECIES_UNKNOWN) ? ": random" : ""));
+				lGuess[i] = guess != Constants.SPECIES_UNKNOWN ? guess : r
+						.nextInt(Constants.COUNT_SPECIES - 1);
+//				System.err.println("For bird #"
+//						+ i
+//						+ " my guess was "
+//						+ guess
+//						+ ((guess == Constants.SPECIES_UNKNOWN) ? ": random"
+//								: ""));
 			}
 		}
 		lastGuesses = lGuess;
@@ -175,7 +187,6 @@ class Player {
 	 * through this function.
 	 */
 	public void hit(GameState pState, int pBird, Deadline pDue) {
-		System.err.println("HIT BIRD!!!");
 		shotsHit++;
 	}
 
@@ -197,22 +208,30 @@ class Player {
 		for (int i = 0; i < pSpecies.length; i++) {
 			if (pSpecies[i] != Constants.SPECIES_UNKNOWN || round == 0) {
 				obs = getObs(pState.getBird(i));
-				modelsBySpecies[pSpecies[i]]
-						.addLast(new HMM(Constants.COUNT_MOVE, Constants.COUNT_SPECIES)); /* TODO fix hmm */
-				modelsBySpecies[pSpecies[i]].getLast().estimateMatrices(erLimit, MAX_TRAIN, toDoubleArray(obs));
+				modelsBySpecies[pSpecies[i]].addLast(new HMM(
+						Constants.COUNT_MOVE, Constants.COUNT_SPECIES));
+				modelsBySpecies[pSpecies[i]].getLast().estimateMatrices(
+						erLimit, MAX_TRAIN, toDoubleArray(obs));
 			}
 		}
-		if(guessesCorrect + guessesFalse > 0)
-			System.err.println("Guess rate: " + guessesCorrect + "/" + (guessesCorrect + guessesFalse) + " : "
-				+ new Double(guessesCorrect / guessesCorrect + guessesFalse) + "%");
-		if(shotsHit + shotsFired > 0)
-		System.err.println("Hit rate: " + shotsHit + "/" + (shotsHit + shotsFired) + " : "
-				+ new Double(shotsHit / (shotsHit + shotsFired)) + "%");
+		if (guessesCorrect + guessesFalse > 0)
+			System.err
+					.println("Guess rate: "
+							+ guessesCorrect
+							+ "/"
+							+ (guessesCorrect + guessesFalse)
+							+ " : "
+							+ ((double) (guessesCorrect) / (guessesCorrect + guessesFalse))*100
+							+ "%");
+		if (shotsHit + shotsFired > 0)
+			System.err.println("Hit rate: " + shotsHit + "/"
+					+ (shotsHit + shotsFired) + " : "
+					+ ((double) (shotsHit) / (shotsHit + shotsFired))*100 + "%");
 	}
 
-	public double[] toDoubleArray(int[] ar){
+	public double[] toDoubleArray(int[] ar) {
 		double[] dAr = new double[ar.length];
-		for(int i = 0; i < ar.length; i++){
+		for (int i = 0; i < ar.length; i++) {
 			dAr[i] = ar[i];
 		}
 		return dAr;
