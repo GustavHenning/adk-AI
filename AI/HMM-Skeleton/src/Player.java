@@ -4,11 +4,24 @@ import java.util.LinkedList;
 import java.util.Random;
 
 class Player {
-	private final int actThreshhold = 50, NUM_TRAIN = 100;
+	private final int actThreshhold = 50, MAX_TRAIN = 100, MOVE_UNCERTAIN = -1;
+	private final double erLimit = 1.0E-10, SHOOT_THRESHOLD = 0.7;
 	private int steps = 0, numBirds, round, shotsHit, shotsFired, guessesCorrect, guessesFalse;
 	private LinkedList<HMM>[] modelsBySpecies;
 	int[] lastGuesses;
 
+	public class PredictMove{
+		public int bird;
+		public int move;
+		public double pMax;
+
+		public PredictMove(int bird, int move, double pMax){
+			this.bird = bird;
+			this.move = move;
+			this.pMax = pMax;
+		}
+	}
+	
 	public Player() {
 		shotsHit = 0;
 		shotsFired = 0;
@@ -44,20 +57,57 @@ class Player {
 		double pMax;
 		Iterator<HMM> it;
 		ArrayList<Integer> birdMoves;
+		LinkedList<PredictMove> probableMoves = new LinkedList<PredictMove>();
 		for (int i = 0; i < numBirds; i++) {
 			b = pState.getBird(i);
 			if (b.isAlive()) {
 				obs = getObs(b);
 				species = identify(obs);
-				pMax = 0;
-				moveToMake = 0;
+				pMax = 0; /* Threshold? */
+				moveToMake = MOVE_UNCERTAIN;
 				if (species != Constants.SPECIES_UNKNOWN && species != Constants.SPECIES_BLACK_STORK) {
 					it = modelsBySpecies[species].iterator();
 					birdMoves = new ArrayList<Integer>();
 					while (it.hasNext()) {
-						/* hmm */
+						/* TODO train on obs? */
+						pObs = it.next().nextEmissionProbabilities();
+						for(int j = 0; j < pObs.length; j++){
+							if(pObs[j] > pMax){
+								pMax = pObs[j];
+								moveToMake = j;
+							}
+						}
+						birdMoves.add(moveToMake);
+					}
+					boolean modelsAgree = true;
+					for(int j = 1; j < birdMoves.size(); j++){
+						if(birdMoves.get(i-1) != birdMoves.get(i)){
+							modelsAgree = false;
+							break;
+						}
+					}
+					if(modelsAgree && moveToMake != MOVE_UNCERTAIN){
+						probableMoves.add(new PredictMove(i, moveToMake, pMax));
 					}
 				}
+			}
+			Iterator<PredictMove> iter = probableMoves.iterator();
+			pMax = 0;
+			moveToMake = MOVE_UNCERTAIN;
+			int bird = -1;
+			PredictMove pm = new PredictMove(-1, -1, -1.0);
+			while(iter.hasNext()){
+				pm = iter.next();
+				if(pm.pMax > pMax){
+					pMax = pm.pMax;
+					moveToMake = pm.move;
+					bird = pm.bird;
+				}
+			}
+			if(pMax > SHOOT_THRESHOLD && moveToMake != MOVE_UNCERTAIN && bird != -1){
+				shotsFired++;
+				steps++;
+				return new Action(bird, moveToMake);
 			}
 		}
 		return cDontShoot;
@@ -132,8 +182,8 @@ class Player {
 			if (pSpecies[i] != Constants.SPECIES_UNKNOWN || round == 0) {
 				obs = getObs(pState.getBird(i));
 				modelsBySpecies[i]
-						.addLast(new HMM(null, null, null)); /* TODO fix hmm */
-				/* TODO use hmm */
+						.addLast(new HMM(Constants.COUNT_MOVE, Constants.COUNT_SPECIES)); /* TODO fix hmm */
+				modelsBySpecies[i].getLast().estimateMatrices(erLimit, MAX_TRAIN, toDoubleArray(obs));
 			}
 		}
 
@@ -143,5 +193,13 @@ class Player {
 				+ new Double(shotsHit / (shotsHit + shotsFired)) + "%");
 	}
 
+	public double[] toDoubleArray(int[] ar){
+		double[] dAr = new double[ar.length];
+		for(int i = 0; i < ar.length; i++){
+			dAr[i] = ar[i];
+		}
+		return dAr;
+	}
+	
 	public static final Action cDontShoot = new Action(-1, -1);
 }

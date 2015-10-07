@@ -4,7 +4,7 @@ public class HMM {
 	/* emissions, initial, transitions, alpha, beta, gamma */
 	protected double[][] emis, init, trans, a, b, g;
 	protected double[][][] xi;
-	
+
 	private final double UNDERFLOW_PREV = 1.0E-20;
 
 	/**
@@ -18,6 +18,36 @@ public class HMM {
 		trans = transitions;
 		emis = emissions;
 		init = initial;
+	}
+
+	/**
+	 * Creates a HMM for the Bird shooting problem
+	 * 
+	 * @param numMoves
+	 * @param numSpecies
+	 */
+	public HMM(int numMoves, int numSpecies) {
+		int N = numSpecies;
+		int T = numMoves;
+		init = new double[1][N];
+		trans = new double[N][N];
+		emis = new double[T][N]; /* switch T, N ? */
+
+		/* matrices start values */
+		for (int i = 0; i < N; i++) {
+			init[0][i] = (1.0 / N);
+		}
+		for (int i = 0; i < N; i++) {
+			for (int j = 0; j < N; j++) {
+				trans[i][j] = (1.0 / N);
+			}
+		}
+		for (int i = 0; i < T; i++) {
+			for (int j = 0; j < N; j++) {
+				emis[i][j] = (1.0 / T);
+			}
+		}
+
 	}
 
 	/**
@@ -82,7 +112,7 @@ public class HMM {
 		}
 		/* set beta(b) */
 		for (int i = r - 2; i >= 0; i--) {
-			int s = (int) seq[i + 1]; 
+			int s = (int) seq[i + 1];
 			for (int j = 0; j < c; j++) {
 				b[i][j] = 0;
 
@@ -115,7 +145,8 @@ public class HMM {
 			for (int j = 0; j < c; j++) {
 				g[i][j] = 0;
 				for (int k = 0; k < c; k++) {
-					xi[i][j][k] = (((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d) + UNDERFLOW_PREV;
+					xi[i][j][k] = (((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d)
+							+ UNDERFLOW_PREV;
 					g[i][j] += xi[i][j][k];
 				}
 			}
@@ -138,7 +169,7 @@ public class HMM {
 		for (int i = 0; i < lenRows(trans); i++) {
 			for (int j = 0; j < lenCols(trans); j++) {
 				double t = 0, d = 0;
-				for (int k = 0; k < seq.length; k++) { 
+				for (int k = 0; k < seq.length; k++) {
 					t += xi[k][i][j];
 					d += g[k][i];
 				}
@@ -164,9 +195,9 @@ public class HMM {
 	 * Returns the emission probability distribution of state (i+1) assuming
 	 * current state i
 	 * 
-	 * @return
+	 * @return Distribution dist from 1 to N where N is the emission length
 	 */
-	public double[][] nextEmissionProbabilities() {
+	public double[] nextEmissionProbabilities() {
 		double[] next = new double[lenCols(init)];
 
 		for (int i = 0; i < lenRows(trans); i++) {
@@ -176,14 +207,42 @@ public class HMM {
 			}
 		}
 
-		double[][] dist = new double[1][lenCols(emis)];
+		double[] dist = new double[lenCols(emis)];
 
 		for (int j = 0; j < lenCols(emis); j++) {
 			for (int i = 0; i < lenRows(emis); i++) {
-				dist[0][j] += next[i] * emis[i][j];
+				dist[j] += next[i] * emis[i][j];
 			}
 		}
 		return dist;
+	}
+	/**
+	 * For Bird shooting, made estimation of matrices into a separate method.
+	 * @param erLimit
+	 * @param maxTrain
+	 * @param seq
+	 */
+	public void estimateMatrices(double erLimit, int maxTrain, double[] seq){
+		int i = 0;
+		train(seq);
+		while (i < maxTrain) {
+			double before = logScaleSum(scale);
+			train(seq);
+			// System.out.println(Math.abs(logScaleSum(hmm.scale) - before));
+			if (Math.abs(logScaleSum(scale) - before) < erLimit) {
+				System.err.println(i + " iterations");
+				break;
+			}
+			i++;
+		}
+	}
+	
+	public static double logScaleSum(double[] scale) {
+		double sum = 0;
+		for (int i = 0; i < scale.length; i++) {
+			sum += Math.log10(scale[i]);
+		}
+		return sum;
 	}
 
 	/**
@@ -199,7 +258,7 @@ public class HMM {
 		double[][] mlt = new double[seq.length][lenRows(trans)];
 
 		int[] statePath = new int[seq.length];
-		
+
 		/* init d */
 		int s = (int) seq[0];
 		for (int i = 0; i < lenRows(trans); i++) {
@@ -209,13 +268,13 @@ public class HMM {
 		for (int i = 1; i < seq.length; i++) {
 			for (int j = 0; j < lenRows(trans); j++) {
 				/* max prob */
-				double mProb = 0; 
+				double mProb = 0;
 				int prev = 0;
 				for (int k = 0; k < lenRows(trans); k++) {
 					/* reverse prob */
 					double rProb = d[i - 1][k] * trans[k][j];
 					mProb = Math.max(mProb, rProb);
-					if(mProb == rProb)
+					if (mProb == rProb)
 						prev = k;
 				}
 				s = (int) seq[i];
@@ -226,16 +285,19 @@ public class HMM {
 		/* find mlt : start with last transition */
 		double mProb = 0;
 		int ind = 0;
-		for(int i = 0; i < lenRows(trans); i++){
-			double rProb = d[seq.length-1][i];
+		for (int i = 0; i < lenRows(trans); i++) {
+			double rProb = d[seq.length - 1][i];
 			mProb = Math.max(rProb, mProb);
-			if(rProb == mProb)
+			if (rProb == mProb)
 				ind = i;
 		}
 		statePath[seq.length - 1] = ind;
-		/* we use mlt to find the most likely path backwards given statePath[last] */
-		for(int i = seq.length-1; i > 0; i--){
-			statePath[i-1] = (int) mlt[i][(int) statePath[i]];
+		/*
+		 * we use mlt to find the most likely path backwards given
+		 * statePath[last]
+		 */
+		for (int i = seq.length - 1; i > 0; i--) {
+			statePath[i - 1] = (int) mlt[i][(int) statePath[i]];
 		}
 		return statePath;
 	}

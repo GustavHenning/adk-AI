@@ -9,7 +9,7 @@ public class Kattis1 {
 				initM = HMM.getMatrix(io);
 		
 		HMM hmm = new HMM(transM, emisM, initM);
-		HMM.printMatrix(hmm.nextEmissionProbabilities(), null);
+		HMM.printVector(hmm.nextEmissionProbabilities());
 		
 		io.close();
 		

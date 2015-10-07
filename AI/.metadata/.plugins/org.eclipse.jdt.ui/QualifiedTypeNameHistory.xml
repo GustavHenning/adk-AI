@@ -3,4 +3,8 @@
 <fullyQualifiedTypeName name="HMM"/>
 <fullyQualifiedTypeName name="javax.tools.ForwardingFileObject"/>
 <fullyQualifiedTypeName name="Kattio"/>
+<fullyQualifiedTypeName name="java.util.LinkedList"/>
+<fullyQualifiedTypeName name="java.util.Iterator"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="java.util.Random"/>
 </qualifiedTypeNameHistroy>
