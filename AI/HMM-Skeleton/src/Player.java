@@ -122,7 +122,23 @@ class Player {
 	}
 
 	private int identify(int[] obs) {
-		return Constants.SPECIES_UNKNOWN;
+		double pMax = 0;
+		int speciesGuess = Constants.SPECIES_UNKNOWN;
+		Iterator<HMM> iter;
+		for(int i = 0; i < modelsBySpecies.length; i++){
+			iter = modelsBySpecies[i].iterator();
+			while(iter.hasNext()){
+				double[] pEmis = iter.next().nextEmissionProbabilities();
+				for(int j = 0; j < pEmis.length; j++){
+					if(pEmis[j] > pMax){
+						pMax = pEmis[j];
+						speciesGuess = i; /* j? */
+					}
+				}
+			}
+		}
+		
+		return speciesGuess;
 	}
 
 	/**
