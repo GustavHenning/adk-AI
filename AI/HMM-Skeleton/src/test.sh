@@ -1,4 +1,5 @@
-javac *.java;
+#!/bin/bash
+javac *.java
 rm player2server
 rm server2player
 mkfifo player2server server2player
