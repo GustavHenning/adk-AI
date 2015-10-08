@@ -34,20 +34,23 @@ public class HMM {
 
 		/* matrices start values */
 		for (int i = 0; i < N; i++) {
-			init[0][i] = (1.0 / N) + Math.random() * (0.5 / N);
+			init[0][i] = (1.0 / N);
+			init[0][i] += Math.random() * (0.1 / N);
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
 				if (i == j) {
-					trans[i][j] = (1 / N) + Math.random() * (0.5 / N); /* but why */
+					trans[i][j] = (1.2 / N);
 				} else {
-					trans[i][j] = (0.5 / N) + Math.random() * (0.5 / N);
+					trans[i][j] = (0.5 / N);
 				}
+				trans[i][j] += Math.random() * (0.1 / N);
 			}
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < T; j++) {
-				emis[i][j] = (1.0 / T) + Math.random() * (0.5 / T);
+				emis[i][j] = (1.0 / T);
+				emis[i][j] += Math.random() * (0.1 / T);
 			}
 		}
 	}
@@ -194,33 +197,25 @@ public class HMM {
 		}
 	}
 
-	public double[] normNextEmissionProbabilities(double[] obs) {
-
-		forward(obs);
-
-		int T = obs.length;
-		double sumA = 0;
-		for (int i = 0; i < a[T - 1].length; i++) {
-			sumA += a[T - 1][i];
-		}
+	public double[] duckNextEmissionProbabilities(double[] obs) {
 		
-		double[] p = new double[emis[0].length];
-		double tmp;
-
-		for (int i = 0; i < trans.length; i++) {
-			tmp = 0.0;
-			for (int j = 0; j < trans.length; j++) {
-				tmp += trans[j][i] * a[T - 1][j];
-			}
-			// System.err.println(tmp + " " + sumA);
-			for (int o = 0; o < emis[0].length; o++) {
-				for (int s = 0; s < trans.length; s++) {
-					p[o] = (emis[s][o] * tmp) / sumA;
+		int[] state = estimateStateFromSequence(obs);
+		int mostProb = state[state.length-1];
+		
+		double[] initial = new double[init[0].length];
+		initial[mostProb] = 1.0;
+		double[] nextEmis = new double[emis[0].length];
+		
+		for(int e = 0; e < emis[0].length; e++){
+			for(int s = 0; s < initial.length; s++){
+				double[] transRow = trans[s];
+				for(int nextS = 0; nextS < transRow.length; nextS++){
+					nextEmis[e] += initial[s] * trans[s][nextS] * emis[nextS][e];
 				}
 			}
 		}
 
-		return p;
+		return nextEmis;
 	}
 
 	/**
