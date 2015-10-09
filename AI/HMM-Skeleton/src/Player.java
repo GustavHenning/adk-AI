@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.Random;
 
 class Player {
-	private final int actThreshhold = 40, MAX_TRAIN = 200, MOVE_UNCERTAIN = -1;
+	private final int actThreshhold = 45, MAX_TRAIN = 200, MOVE_UNCERTAIN = -1;
 	private final double erLimit = 1.0E-15, SHOOT_THRESHOLD = 0.9;
 	private int steps = 0, numBirds, round, shotsHit, shotsFired,
 			guessesCorrect, guessesTotal;

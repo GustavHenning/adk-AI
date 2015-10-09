@@ -35,22 +35,22 @@ public class HMM {
 		/* matrices start values */
 		for (int i = 0; i < N; i++) {
 			init[0][i] = (1.0 / N);
-			init[0][i] += Math.random() * (0.1 / N);
+//			init[0][i] += Math.random() * (0.1 / N);
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
 				if (i == j) {
-					trans[i][j] = (1.2 / N);
+					trans[i][j] = (1.5 / N);
 				} else {
 					trans[i][j] = (0.5 / N);
 				}
-				trans[i][j] += Math.random() * (0.1 / N);
+//				trans[i][j] += Math.random() * (0.1 / N);
 			}
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < T; j++) {
 				emis[i][j] = (1.0 / T);
-				emis[i][j] += Math.random() * (0.1 / T);
+//				emis[i][j] += Math.random() * (0.1 / T);
 			}
 		}
 	}
