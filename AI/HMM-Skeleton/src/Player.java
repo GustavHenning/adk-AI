@@ -73,7 +73,8 @@ class Player {
 					it = modelsBySpecies[species].iterator();
 					birdMoves = new ArrayList<Integer>();
 					while (it.hasNext()) {
-						pObs = it.next().duckNextEmissionProbabilities(
+						HMM h = it.next();
+						pObs = h.duckNextEmissionProbabilities(
 								toDoubleArray(obs));
 						for (int j = 0; j < pObs.length; j++) {
 							if (pObs[j] > pMax) {

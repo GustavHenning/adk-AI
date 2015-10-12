@@ -4,6 +4,7 @@ public class HMM {
 	protected double[][] emis, init, trans, a, b, g;
 	protected double[][][] xi;
 
+	public double scaleDif = 0.0;
 	private final double UNDERFLOW_PREV = 1.0E-20;
 
 	/**
@@ -35,24 +36,47 @@ public class HMM {
 		/* matrices start values */
 		for (int i = 0; i < N; i++) {
 			init[0][i] = (1.0 / N);
-//			init[0][i] += Math.random() * (0.1 / N);
 		}
+		double dominant = 0.9;
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
 				if (i == j) {
-					trans[i][j] = (1.5 / N);
+					trans[i][j] = dominant;
 				} else {
-					trans[i][j] = (0.5 / N);
+					trans[i][j] = (1 - dominant) / N;
 				}
-//				trans[i][j] += Math.random() * (0.1 / N);
 			}
 		}
-		for (int i = 0; i < N; i++) {
-			for (int j = 0; j < T; j++) {
-				emis[i][j] = (1.0 / T);
-//				emis[i][j] += Math.random() * (0.1 / T);
+		// up-left | up | up-right | left | stopped | right | down-left | down | down-right
+		String e = "6 9 " 
+				+ "0.187 0.001 0.187 0.125 0.000 0.125 0.187 0.001 0.187 "
+				+ "0.187 0.001 0.187 0.125 0.001 0.125 0.187 0.001 0.187 "
+				+ "0.187 0.001 0.187 0.125 0.001 0.125 0.187 0.001 0.187 "
+				+ "0.187 0.001 0.187 0.125 0.001 0.125 0.187 0.001 0.187 "
+				+ "0.187 0.001 0.187 0.125 0.001 0.125 0.187 0.001 0.187 "
+				+ "0.187 0.001 0.187 0.125 0.001 0.125 0.187 0.001 0.187";
+		emis = matFromString(e);
+		 for (int i = 0; i < N; i++) {
+		 for (int j = 0; j < T; j++) {
+//		 emis[i][j] = (1.0 / T);
+//		  emis[i][j] += Math.random() * (0.001 / N);
+		 }
+		 }
+	}
+
+	public static double[][] matFromString(String s) {
+		String[] split = s.split(" ");
+		int lenRows = Integer.parseInt(split[0]);
+		int lenCols = Integer.parseInt(split[1]);
+		double[][] d = new double[lenRows][lenCols];
+		for (int i = 0; i < lenRows; i++) {
+			for (int j = 0; j < lenCols; j++) {
+//				System.err.println(i + " " + j + " " + (2 + (j * lenCols) + i) + " " + split[(2 + (i * lenCols) + j)]);
+				d[i][j] = Double.parseDouble(split[(2 + (i * lenCols) + j)]);
 			}
 		}
+
+		return d;
 	}
 
 	/**
@@ -119,8 +143,7 @@ public class HMM {
 				b[i][j] = 0;
 
 				for (int k = 0; k < c; k++) {
-					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k]
-							+ UNDERFLOW_PREV;
+					b[i][j] += trans[j][k] * emis[k][s] * b[i + 1][k] + UNDERFLOW_PREV;
 				}
 				/* scale b */
 				b[i][j] *= scale[i];
@@ -141,17 +164,14 @@ public class HMM {
 			double d = 0;
 			for (int j = 0; j < c; j++) {
 				for (int k = 0; k < c; k++) {
-					d += (a[i][j]) * (trans[j][k])
-							* (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])
-							+ UNDERFLOW_PREV;
+					d += (a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k]) + UNDERFLOW_PREV;
 				}
 			}
 			/* set xi */
 			for (int j = 0; j < c; j++) {
 				g[i][j] = 0;
 				for (int k = 0; k < c; k++) {
-					xi[i][j][k] = (((a[i][j]) * (trans[j][k])
-							* (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d)
+					xi[i][j][k] = (((a[i][j]) * (trans[j][k]) * (emis[k][(int) seq[i + 1]]) * (b[i + 1][k])) / d)
 							+ UNDERFLOW_PREV;
 					g[i][j] += xi[i][j][k];
 				}
@@ -198,18 +218,18 @@ public class HMM {
 	}
 
 	public double[] duckNextEmissionProbabilities(double[] obs) {
-		
+
 		int[] state = estimateStateFromSequence(obs);
-		int mostProb = state[state.length-1];
-		
+		int mostProb = state[state.length - 1];
+
 		double[] initial = new double[init[0].length];
 		initial[mostProb] = 1.0;
 		double[] nextEmis = new double[emis[0].length];
-		
-		for(int e = 0; e < emis[0].length; e++){
-			for(int s = 0; s < initial.length; s++){
+
+		for (int e = 0; e < emis[0].length; e++) {
+			for (int s = 0; s < initial.length; s++) {
 				double[] transRow = trans[s];
-				for(int nextS = 0; nextS < transRow.length; nextS++){
+				for (int nextS = 0; nextS < transRow.length; nextS++) {
 					nextEmis[e] += initial[s] * trans[s][nextS] * emis[nextS][e];
 				}
 			}
@@ -257,7 +277,7 @@ public class HMM {
 		while (i < maxTrain) {
 			double before = logScaleSum(scale);
 			train(seq);
-			// System.out.println(Math.abs(logScaleSum(hmm.scale) - before));
+			scaleDif = Math.abs(logScaleSum(scale) - before);
 			if (Math.abs(logScaleSum(scale) - before) < erLimit) {
 				break;
 			}
@@ -293,8 +313,7 @@ public class HMM {
 			for (int to = 0; to < nStates; to++) {
 				emissions[to][e + 1] = 0.0;
 				for (int from = 0; from < nStates; from++) {
-					emissions[to][e + 1] += emissions[from][e]
-							* trans[from][to] * emis[to][seq[e + 1]];
+					emissions[to][e + 1] += emissions[from][e] * trans[from][to] * emis[to][seq[e + 1]];
 				}
 			}
 		}
@@ -429,8 +448,7 @@ public class HMM {
 	/* Helping methods */
 	protected static int lenRows(double[][] ar) {
 		if (ar.length <= 0) {
-			System.err
-					.println("RowLengthError: Rows of an array is of length 0. ");
+			System.err.println("RowLengthError: Rows of an array is of length 0. ");
 			System.exit(1);
 		}
 		return ar.length > 0 ? ar.length : -1;
@@ -438,8 +456,7 @@ public class HMM {
 
 	protected static int lenCols(double[][] ar) {
 		if (ar.length <= 0 || (ar.length > 0 && ar[0].length == 0)) {
-			System.err
-					.println("ColLengthError: Columns of an array is of length 0. ");
+			System.err.println("ColLengthError: Columns of an array is of length 0. ");
 			System.exit(1);
 		}
 		return ar.length > 0 ? ar[0].length : -1;
