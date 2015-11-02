@@ -1,6 +1,6 @@
-package role;
-public class Roleplay {
 
+public class Roleplay {
+		final boolean DEBUG = false;
 		/* 
 		* In: 
 		*	vertices: (v>=1)
@@ -31,20 +31,23 @@ public class Roleplay {
 
 			if(k < 3)
 				k = 3;
-
+			if(DEBUG)
+				System.out.println("n s k");
 			System.out.println(n + " " + s + " " + k);
-			
 			/* Let all roles be played by any actor (except divas) */
 			StringBuilder sb = new StringBuilder("" + (k-2));
 			for(int i = 1; i <= k-2; i++){
 				sb.append(" " + (i+2));
 			}
 				/* roles */
+			if(DEBUG)
+				System.out.println("roles");
 			for(int i = 1; i < n; i++){
 				System.out.println(sb.toString());
 			}
 			System.out.println("2 1 2"); //last fictional node have divas 1 & 2
-
+			if(DEBUG)
+				System.out.println("scenes");
 			for(int i = 0; i < s; i++){
 				int n1 = io.getInt();
 				int n2 = io.getInt();
