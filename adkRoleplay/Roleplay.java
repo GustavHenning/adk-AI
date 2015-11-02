@@ -1,5 +1,7 @@
 public class Roleplay {
-	final boolean DEBUG = true;
+	final boolean DEBUG = false;
+	final String WS = " ";
+	Kattio io = new Kattio(System.in, System.out);
 
 	/*
 	 * In: vertices: (v>=1) edges: (e>=0) goal: (m=>1)
@@ -9,55 +11,48 @@ public class Roleplay {
 	 */
 
 	public Roleplay() {
-		Kattio io = new Kattio(System.in, System.out);
 		int v = io.getInt();
 		int e = io.getInt();
 		int m = io.getInt();
 
-		int n = v + 1;
-		int s = e;
-		int k = m + 1;
+		int n = v + 3;
+		int s = e + 2;
+		int k = m + 3;
 
-		if (k < 3)
-			k = 3;
 		if (DEBUG)
-			System.out.println("n s k");
-		System.out.println(n + " " + 1 + " " + k);
-		/* Let all roles be played by any actor (except divas) */
-		StringBuilder sb = new StringBuilder("" + (k - 2));
-		for (int i = 1; i <= k - 2; i++) {
-			sb.append(" " + (i + 2));
-		}
-		/* roles */
-		if (DEBUG)
-			System.out.println("roles");
-		for (int i = 1; i < n; i++) {
-			System.out.println(sb.toString());
-		}
-		System.out.println("2 1 2"); // last fictional node have divas 1 & 2
-		if (DEBUG)
-			System.out.println("scenes");
+			io.println("n s k");
+		io.println(n + WS + s + WS + k);
 
-		int[] val = new int[n];
-		for (int i = 0; i < s; i++) {
-			val[io.getInt()]++;
-			val[io.getInt()]++;
+		if (DEBUG)
+			io.println("roles");
+		/* roles base case */
+		io.println(1 + WS + 1);
+		io.println(1 + WS + 2);
+		io.println(1 + WS + 3);
+
+		StringBuilder sb = new StringBuilder();
+		sb.append((k - 3) + WS);
+
+		for (int i = 4; i < k; i++) {
+			sb.append(i + WS);
 		}
-		int maxVal = 1;
-		for (int i = 1; i < val.length; i++) {
-			maxVal = (val[i] > maxVal) ? val[i] : maxVal;
+		sb.append(k);
+		/* rest of roles by all actors */
+		for (int i = 4; i <= n; i++) {
+			io.println(sb.toString());
 		}
-		sb = new StringBuilder((val[maxVal] + 1) + " ");
-		for (int j = 1; j < (val[maxVal] + 1); j++) {
-			sb.append(j + " ");
+
+		if (DEBUG)
+			io.println("scenes");
+		/* scenes base case */
+		io.println(2 + WS + 1 + WS + 3);
+		io.println(2 + WS + 2 + WS + 3);
+		/* rest of scenes = edges shifted by divas */
+		for (int i = 3; i <= s; i++) {
+			io.println("2 " + (io.getInt() + 3) + WS + (io.getInt() + 3));
 		}
-		sb.append(n);
-		System.out.println(sb.toString());
-		// for (int i = 0; i < s; i++) {
-		// int n1 = io.getInt();
-		// int n2 = io.getInt();
-		// System.out.println("3 " + n1 + " " + n2 + " " + n);
-		// }
+
+
 		if (!DEBUG)
 			io.close();
 	}
