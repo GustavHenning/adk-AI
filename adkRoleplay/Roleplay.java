@@ -1,5 +1,5 @@
 public class Roleplay {
-	final boolean DEBUG = false;
+	final boolean DEBUG = true;
 	final String WS = " ";
 	Kattio io = new Kattio(System.in, System.out);
 
@@ -10,7 +10,7 @@ public class Roleplay {
 	 * k1, k2 ... etc for(scenes) n1, n2 ... etc
 	 */
 
-	public Roleplay() {
+	public Roleplay() {		
 		int v = io.getInt();
 		int e = io.getInt();
 		int m = io.getInt();
@@ -52,8 +52,8 @@ public class Roleplay {
 			io.println("2 " + (io.getInt() + 3) + WS + (io.getInt() + 3));
 		}
 
-
-		if (!DEBUG)
+		io.flush();
+		if(!DEBUG)
 			io.close();
 	}
 

@@ -17,6 +17,7 @@ public class Test {
 		test("4 6 3" + " 1 2 2 3 3 4 1 4 2 4 1 3");
 		System.out.println("y");
 		test("4 6 4" + " 1 2 2 3 3 4 1 4 2 4 1 3");
+		r.io.close();
 	}
 
 	public void test(String t) {
